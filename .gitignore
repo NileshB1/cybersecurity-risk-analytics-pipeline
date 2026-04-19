@@ -12,8 +12,8 @@ Thumbs.db
 .vscode/
 
 # Project secrets
-src/.env
-.env
+#src/.env
+#.env
 
 # Python cache
 __pycache__/
