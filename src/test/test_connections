@@ -1,0 +1,586 @@
+"""
+test_connections.py
+-------------------
+Module   : Connection Validation
+Purpose  : Verifies that all external services (NVD API, CISA KEV feed,
+           MongoDB, PostgreSQL) are reachable and correctly configured
+           before any extraction code is written or run.
+ 
+Usage
+-----
+    python test_connections.py
+ 
+confirms all services are reachable.
+"""
+
+import logging
+import os
+import requests
+import sys
+import pymongo
+import psycopg2
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from typing import Optional
+from dotenv import load_dotenv
+from pymongo import MongoClient
+
+# Load environment variables from .env file
+load_dotenv()
+
+# ----------------------
+# Logging configuration
+# ----------------------
+def configure_logger(name: str) -> logging.Logger:
+    """
+    Build and return logger with specified name and standard formatting.
+
+    Args:
+        name (str): _description_
+
+    Returns:
+        logging.Logger: _description_
+    """
+    logger = logging.getLogger(name)
+    if logger.hasHandlers():
+        return logger  # already configured
+    
+    logger.setLevel(logging.DEBUG)
+
+    formatter = logging.Formatter(
+        fmt="%(asctime)s  [%(levelname)-8s]  %(name)s  —  %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+    # Console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(formatter)
+
+    #File handler
+    file_handler = logging.FileHandler("pipeline.log", mode="a", encoding="utf-8")
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
+
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+
+    return logger
+
+# ----------------------
+# Result Dataclass
+# ----------------------
+@dataclass
+class ConnectionResult:
+    """
+    Holds the outcome of a connection test.
+    Keeps results structured so the reporter can present them cleanly.
+    """
+    service: str
+    success: bool
+    message: str
+    detail:  Optional[str] = None
+    warnings: list = field(default_factory=list)
+
+# -----------------------------------------
+# Abstarct Base Class for Connection Tests
+# ----------------------------------------
+class BaseConnectionTest(ABC):
+    """
+    Abstract base class for connection tests.
+
+    Every subclass must implement test() method which returns a
+    ConnectionResult.  The shared run() method handles logging
+    so subclasses stay focused on the actual connectivity logic.
+    """
+
+    def __init__(self, service_name: str):
+        self.service_name = service_name
+        self.logger = configure_logger(f"ConnectionTest.{service_name}")
+ 
+    @abstractmethod
+    def test(self) -> ConnectionResult:
+        """Perform the connection test and return a ConnectionResult."""
+        ...
+ 
+    def run(self) -> ConnectionResult:
+        """
+        Wraps test() with structured logging.
+        Catches unexpected exceptions so one failing test never
+        crashes the whole validation run.
+        """
+        self.logger.info(f"Testing connection: {self.service_name}")
+        try:
+            result = self.test()
+            if result.success:
+                self.logger.info(f"PASS: {result.message}")
+            else:
+                self.logger.error(f"FAIL: {result.message}")
+            if result.detail:
+                self.logger.debug(f"Detail: {result.detail}")
+            for w in result.warnings:
+                self.logger.warning(f"WARN:  {w}")
+            return result
+ 
+        except Exception as exp:
+            self.logger.exception(f"Unexpected error while testing {self.service_name}")
+            return ConnectionResult(
+                service=self.service_name,
+                success=False,
+                message=f"Unexpected exception: {exp}"
+            )
+
+# -----------------------
+# NVD API Tester
+# ------------------------
+ 
+class NvdApiTester(BaseConnectionTest):
+    """
+    Validates connectivity to the NIST National Vulnerability Database
+    REST API (v2.0).
+ 
+    The NVD applies different rate limits depending on whether an API
+    key is present:
+        - If No key: 5 requests per 30 seconds
+        - With key: 50 requests per 30 seconds
+ 
+    This tester pulls a minimal 5-record sample just to confirm the
+    endpoint is reachable and returns a valid JSON structure.
+    """
+ 
+    BASE_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
+    TIMEOUT_SEC = 15
+    SAMPLE_SIZE = 5
+ 
+    def __init__(self):
+        super().__init__("NVD_CVE_API")
+        self.api_key = os.getenv("NVD_API_KEY", "").strip()
+ 
+    def _build_headers(self) -> dict:
+        """Return request headers with the API key if one is configured."""
+        headers = {"Accept": "application/json"}
+        if self.api_key:
+            headers["apiKey"] = self.api_key
+        return headers
+ 
+    def test(self) -> ConnectionResult:
+        warnings = []
+ 
+        if not self.api_key:
+            warnings.append(
+                "NVD_API_KEY not set in .env - rate limit is 5 req/30 s."
+            )
+ 
+        headers = self._build_headers()
+        params  = {"resultsPerPage": self.SAMPLE_SIZE, "startIndex": 0}
+ 
+        try:
+            response = requests.get(
+                self.BASE_URL,
+                headers=headers,
+                params=params,
+                timeout=self.TIMEOUT_SEC
+            )
+            response.raise_for_status()
+ 
+        except requests.exceptions.ConnectionError:
+            return ConnectionResult(
+                service=self.service_name,
+                success=False,
+                message="Could not reach NVD API - check your internet connection.",
+                warnings=warnings
+            )
+        except requests.exceptions.Timeout:
+            return ConnectionResult(
+                service=self.service_name,
+                success=False,
+                message=f"NVD API timed out after {self.TIMEOUT_SEC} seconds.",
+                warnings=warnings
+            )
+        except requests.exceptions.HTTPError as http_err:
+            return ConnectionResult(
+                service=self.service_name,
+                success=False,
+                message=f"NVD API returned HTTP {response.status_code}.",
+                detail=str(http_err),
+                warnings=warnings
+            )
+ 
+        payload = response.json()
+        total_results = payload.get("totalResults", 0)
+        returned = len(payload.get("vulnerabilities", []))
+ 
+        return ConnectionResult(
+            service=self.service_name,
+            success=True,
+            message=f"NVD API reachable: {total_results:,} total CVEs available.",
+            detail=f"Sample fetch returned {returned} records. API key present: {bool(self.api_key)}",
+            warnings=warnings
+        )
+
+# -----------------------
+# CISA KEV Feed Tester
+# -----------------------
+ 
+class CisaKevTester(BaseConnectionTest):
+    """
+    Validates connectivity to the CISA Known Exploited Vulnerabilities
+    JSON feed.
+ 
+    CISA publishes this as a single downloadable JSON file - no
+    pagination or authentication is required.  We download the full
+    file to confirm it parses correctly and report the record count.
+    """
+ 
+    KEV_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+    TIMEOUT_SEC = 20
+ 
+    def __init__(self):
+        super().__init__("CISA_KEV_FEED")
+ 
+    def test(self) -> ConnectionResult:
+        try:
+            response = requests.get(self.KEV_URL, timeout=self.TIMEOUT_SEC)
+            response.raise_for_status()
+ 
+        except requests.exceptions.ConnectionError:
+            return ConnectionResult(
+                service=self.service_name,
+                success=False,
+                message="Could not reach CISA KEV feed - check your internet connection."
+            )
+        except requests.exceptions.Timeout:
+            return ConnectionResult(
+                service=self.service_name,
+                success=False,
+                message=f"CISA KEV feed timed out after {self.TIMEOUT_SEC} seconds."
+            )
+        except requests.exceptions.HTTPError as http_err:
+            return ConnectionResult(
+                service=self.service_name,
+                success=False,
+                message=f"CISA KEV feed returned HTTP {response.status_code}.",
+                detail=str(http_err)
+            )
+ 
+        payload  = response.json()
+        total_vulns = len(payload.get("vulnerabilities", []))
+        catalog_version = payload.get("catalogVersion", "unknown")
+        date_released = payload.get("dateReleased", "unknown")
+ 
+        return ConnectionResult(
+            service=self.service_name,
+            success=True,
+            message=f"CISA KEV feed reachable - {total_vulns:,} exploited vulnerabilities.",
+            detail=f"Catalog version: {catalog_version} | Released: {date_released}"
+        )
+ 
+ 
+# ---------------
+# MongoDB Tester
+# ---------------
+ 
+class MongoDbTester(BaseConnectionTest):
+    """
+    Validates the MongoDB connection using credentials from .env.
+ 
+    Uses a short serverSelectionTimeoutMS. Checks that
+    the target database exists (or can be created) and confirms
+    """
+ 
+    TIMEOUT_MS = 5000
+    EXPECTED_COLLECTIONS = {"cve_raw", "kev_raw", "breach_raw"}
+ 
+    def __init__(self):
+        super().__init__("MongoDB")
+        self.uri = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+        self.db_name = os.getenv("MONGO_DB", "cybersecurity_db")
+ 
+    def test(self) -> ConnectionResult:
+        warnings = []
+ 
+        try:
+            client = MongoClient(
+                self.uri,
+                serverSelectionTimeoutMS=self.TIMEOUT_MS
+            )
+            client.admin.command("ping")
+ 
+        except pymongo.errors.ServerSelectionTimeoutError:
+            return ConnectionResult(
+                service=self.service_name,
+                success=False,
+                message=f"MongoDB not reachable at {self.uri}. Is mongod running?",
+                detail="ServerSelectionTimeoutError after 5 seconds."
+            )
+        except pymongo.errors.ConfigurationError as cfg_err:
+            return ConnectionResult(
+                service=self.service_name,
+                success=False,
+                message="MongoDB URI is malformed - check MONGO_URI in .env.",
+                detail=str(cfg_err)
+            )
+        except pymongo.errors.OperationFailure as op_err:
+            return ConnectionResult(
+                service=self.service_name,
+                success=False,
+                message="MongoDB authentication failed - check credentials in MONGO_URI.",
+                detail=str(op_err)
+            )
+ 
+        db = client[self.db_name]
+        existing_collections = set(db.list_collection_names())
+        missing_collections = self.EXPECTED_COLLECTIONS - existing_collections
+ 
+        if missing_collections:
+            warnings.append(
+                f"Collections not yet created (will be auto-created on first insert): "
+                f"{', '.join(sorted(missing_collections))}"
+            )
+ 
+        client.close()
+ 
+        return ConnectionResult(
+            service=self.service_name,
+            success=True,
+            message=f"MongoDB connected - database '{self.db_name}' accessible.",
+            detail=f"Existing collections: {existing_collections or 'none yet'}",
+            warnings=warnings
+        )
+ 
+ 
+# ------------------------
+# PostgreSQL Tester
+# ------------------------
+ 
+class PostgreSqlTester(BaseConnectionTest):
+    """
+    Validates the PostgreSQL connection using credentials from .env.
+    """
+ 
+    EXPECTED_TABLES = {
+        "vulnerabilities",
+        "exploited_vulnerabilities",
+        "breaches",
+        "industry_summary"
+    }
+ 
+    def __init__(self):
+        super().__init__("PostgreSQL")
+        self.config = {
+            "host":     os.getenv("PG_HOST", "localhost"),
+            "port":     os.getenv("PG_PORT", "5432"),
+            "dbname":   os.getenv("PG_DB",  "cybersecurity_db"),
+            "user":     os.getenv("PG_USER", "postgres"),
+            "password": os.getenv("PG_PASSWORD", ""),
+        }
+ 
+    def test(self) -> ConnectionResult:
+        warnings = []
+ 
+        try:
+            conn = psycopg2.connect(**self.config, connect_timeout=10)
+ 
+        except psycopg2.OperationalError as op_err:
+            return ConnectionResult(
+                service=self.service_name,
+                success=False,
+                message=(
+                    f"PostgreSQL connection failed. Check PG_HOST, PG_PORT, "
+                    f"PG_USER, PG_PASSWORD in .env."
+                ),
+                detail=str(op_err)
+            )
+ 
+        # Fetch the server version
+        with conn.cursor() as cur:
+            cur.execute("SELECT version();")
+            pg_version = cur.fetchone()[0]
+ 
+        # Check which pipeline tables already exist
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT table_name
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
+                  AND table_name = ANY(%s);
+            """, (list(self.EXPECTED_TABLES),))
+            existing_tables = {row[0] for row in cur.fetchall()}
+ 
+        missing_tables = self.EXPECTED_TABLES - existing_tables
+ 
+        if missing_tables:
+            warnings.append(
+                f"Pipeline tables not yet created: {', '.join(sorted(missing_tables))}."
+            )
+ 
+        conn.close()
+ 
+        return ConnectionResult(
+            service=self.service_name,
+            success=True,
+            message=(
+                f"PostgreSQL connected - database '{self.config['dbname']}' accessible. "
+                f"Tables present: {len(existing_tables)}/{len(self.EXPECTED_TABLES)}"
+            ),
+            detail=pg_version,
+            warnings=warnings
+        )
+ 
+ 
+# --------------------------------------------------
+# Privacy Rights Clearinghouse Reachability Tester
+# ------------------------------------------------
+ 
+class BreachSiteReachabilityTester(BaseConnectionTest):
+    """
+    Confirms that the Privacy Rights Clearinghouse breach database
+    page is reachable and returns HTML content before we invest time
+    in writing the full scraper.
+ 
+    Does NOT parse or scrape anything - just validates a 200 OK
+    and that the response looks like an HTML page.
+    """
+ 
+    SITE_URL = "https://privacyrights.org/data-breaches"
+    TIMEOUT_SEC = 20
+    USER_AGENT = "Mozilla/5.0"
+ 
+    def __init__(self):
+        super().__init__("PrivacyRights_Site")
+ 
+    def test(self) -> ConnectionResult:
+        headers = {"User-Agent": self.USER_AGENT}
+ 
+        try:
+            response = requests.get(
+                self.SITE_URL,
+                headers=headers,
+                timeout=self.TIMEOUT_SEC
+            )
+            response.raise_for_status()
+ 
+        except requests.exceptions.ConnectionError:
+            return ConnectionResult(
+                service=self.service_name,
+                success=False,
+                message="Privacy Rights Clearinghouse site is not reachable."
+            )
+        except requests.exceptions.Timeout:
+            return ConnectionResult(
+                service=self.service_name,
+                success=False,
+                message=f"Site timed out after {self.TIMEOUT_SEC} seconds."
+            )
+        except requests.exceptions.HTTPError as http_err:
+            return ConnectionResult(
+                service=self.service_name,
+                success=False,
+                message=f"Site returned HTTP {response.status_code}.",
+                detail=str(http_err)
+            )
+ 
+        content_type = response.headers.get("Content-Type", "")
+        content_length = len(response.content)
+        is_html = "text/html" in content_type
+ 
+        warnings = []
+        if not is_html:
+            warnings.append(
+                f"Response Content-Type is '{content_type}' - expected text/html. "
+                f"The scraper may need to be adjusted if the site structure has changed."
+            )
+ 
+        return ConnectionResult(
+            service=self.service_name,
+            success=True,
+            message=f"Privacy Rights Clearinghouse reachable - {content_length:,} bytes returned.",
+            detail=f"Content-Type: {content_type}",
+            warnings=warnings
+        )
+ 
+ 
+# ----------------------------
+# Connection Validation Runner
+# ----------------------------
+ 
+class ConnectionValidationRunner:
+    """
+    Orchestrates all connection testers, collects results, and
+    prints a summary report to the console and pipeline.log.
+ 
+    Adding a new service requires only:
+        1. Creating a new BaseConnectionTester subclass
+        2. Adding an instance to the 'testers' list in __init__
+    """
+ 
+    def __init__(self):
+        self.logger = configure_logger("ConnectionValidationRunner")
+        self.testers: list[BaseConnectionTest] = [
+            NvdApiTester(),
+            CisaKevTester(),
+            BreachSiteReachabilityTester(),
+            MongoDbTester(),
+            PostgreSqlTester(),
+        ]
+ 
+    def run_all(self) -> list[ConnectionResult]:
+        """Run every tester and return the full list of results."""
+        self.logger.info("=" * 65)
+        self.logger.info("Connection Validation Suite")
+        self.logger.info("Cybersecurity Risk Analytics Pipeline")
+        self.logger.info("=" * 65)
+ 
+        results = []
+        for tester in self.testers:
+            result = tester.run()
+            results.append(result)
+            
+            self.logger.info("\n")
+ 
+        return results
+ 
+    def print_summary(self, results: list[ConnectionResult]) -> None:
+        """Print a compact pass/fail summary table at the end of the run."""
+        self.logger.info("=" * 65)
+        self.logger.info("  SUMMARY")
+        self.logger.info("=" * 65)
+ 
+        passed = 0
+        failed = 0
+ 
+        for r in results:
+            status = "PASS" if r.success else "FAIL"
+            result   = "passed" if r.success else "failed"
+            self.logger.info(f"  {result}  [{status}]  {r.service:<35}  {r.message[:55]}")
+            if r.success:
+                passed += 1
+            else:
+                failed += 1
+ 
+        self.logger.info("-" * 65)
+        self.logger.info(f"  {passed} passed   {failed} failed   out of {len(results)} services")
+        self.logger.info("=" * 65)
+ 
+        if failed == 0:
+            self.logger.info("All connections verified..")
+        else:
+            self.logger.warning(
+                f"  {failed} service(s) failed. Fix the issues above before running extractors."
+            )
+ 
+    def run(self) -> bool:
+        """
+        Main entry point.  Returns True if all services passed,
+        False if any failed - useful for CI or automated checks.
+        """
+        results = self.run_all()
+        self.print_summary(results)
+        return all(r.success for r in results)
+    
+
+# Entry point for testing connections
+if __name__ == "__main__":
+    runner = ConnectionValidationRunner()
+    result = runner.run()
+    sys.exit(0 if result else 1)
