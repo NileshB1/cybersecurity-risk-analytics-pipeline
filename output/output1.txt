@@ -1,0 +1,41 @@
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python test\test_connections
+2026-04-19 21:48:51  [INFO    ]  ConnectionValidationRunner  —  =================================================================
+2026-04-19 21:48:51  [INFO    ]  ConnectionValidationRunner  —  Connection Validation Suite
+2026-04-19 21:48:51  [INFO    ]  ConnectionValidationRunner  —  Cybersecurity Risk Analytics Pipeline
+2026-04-19 21:48:51  [INFO    ]  ConnectionValidationRunner  —  =================================================================
+2026-04-19 21:48:51  [INFO    ]  ConnectionTest.NVD_CVE_API  —  Testing connection: NVD_CVE_API
+2026-04-19 21:48:52  [INFO    ]  ConnectionTest.NVD_CVE_API  —  PASS: NVD API reachable: 345,210 total CVEs available.
+2026-04-19 21:48:52  [INFO    ]  ConnectionValidationRunner  —
+
+2026-04-19 21:48:52  [INFO    ]  ConnectionTest.CISA_KEV_FEED  —  Testing connection: CISA_KEV_FEED
+2026-04-19 21:48:52  [INFO    ]  ConnectionTest.CISA_KEV_FEED  —  PASS: CISA KEV feed reachable - 1,569 exploited vulnerabilities.
+2026-04-19 21:48:52  [INFO    ]  ConnectionValidationRunner  —
+
+2026-04-19 21:48:52  [INFO    ]  ConnectionTest.PrivacyRights_Site  —  Testing connection: PrivacyRights_Site
+2026-04-19 21:48:53  [INFO    ]  ConnectionTest.PrivacyRights_Site  —  PASS: Privacy Rights Clearinghouse reachable - 73,555 bytes returned.
+2026-04-19 21:48:53  [INFO    ]  ConnectionValidationRunner  —
+
+2026-04-19 21:48:53  [INFO    ]  ConnectionTest.MongoDB  —  Testing connection: MongoDB
+2026-04-19 21:48:53  [INFO    ]  ConnectionTest.MongoDB  —  PASS: MongoDB connected - database 'cybersecurity_db' accessible.
+2026-04-19 21:48:53  [WARNING ]  ConnectionTest.MongoDB  —  WARN:  Collections not yet created (will be auto-created on first insert): breach_raw, cve_raw, kev_raw
+2026-04-19 21:48:53  [INFO    ]  ConnectionValidationRunner  —
+
+2026-04-19 21:48:53  [INFO    ]  ConnectionTest.PostgreSQL  —  Testing connection: PostgreSQL
+2026-04-19 21:48:53  [INFO    ]  ConnectionTest.PostgreSQL  —  PASS: PostgreSQL connected - database 'cybersecurity_db' accessible. Tables present: 0/4
+2026-04-19 21:48:53  [WARNING ]  ConnectionTest.PostgreSQL  —  WARN:  Pipeline tables not yet created: breaches, exploited_vulnerabilities, industry_summary, vulnerabilities.
+2026-04-19 21:48:53  [INFO    ]  ConnectionValidationRunner  —
+
+2026-04-19 21:48:53  [INFO    ]  ConnectionValidationRunner  —  =================================================================
+2026-04-19 21:48:53  [INFO    ]  ConnectionValidationRunner  —    SUMMARY
+2026-04-19 21:48:53  [INFO    ]  ConnectionValidationRunner  —  =================================================================
+2026-04-19 21:48:53  [INFO    ]  ConnectionValidationRunner  —    passed  [PASS]  NVD_CVE_API                          NVD API reachable: 345,210 total CVEs available.
+2026-04-19 21:48:53  [INFO    ]  ConnectionValidationRunner  —    passed  [PASS]  CISA_KEV_FEED                        CISA KEV feed reachable - 1,569 exploited vulnerabiliti
+2026-04-19 21:48:53  [INFO    ]  ConnectionValidationRunner  —    passed  [PASS]  PrivacyRights_Site                   Privacy Rights Clearinghouse reachable - 73,555 bytes r
+2026-04-19 21:48:53  [INFO    ]  ConnectionValidationRunner  —    passed  [PASS]  MongoDB                              MongoDB connected - database 'cybersecurity_db' accessi
+2026-04-19 21:48:53  [INFO    ]  ConnectionValidationRunner  —    passed  [PASS]  PostgreSQL                           PostgreSQL connected - database 'cybersecurity_db' acce
+2026-04-19 21:48:53  [INFO    ]  ConnectionValidationRunner  —  -----------------------------------------------------------------
+2026-04-19 21:48:53  [INFO    ]  ConnectionValidationRunner  —    5 passed   0 failed   out of 5 services
+2026-04-19 21:48:53  [INFO    ]  ConnectionValidationRunner  —  =================================================================
+2026-04-19 21:48:53  [INFO    ]  ConnectionValidationRunner  —  All connections verified..
+
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>
