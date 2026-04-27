@@ -8,12 +8,13 @@ import json
 import logging
 import os
 import sys
+from pathlib import Path
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env")
 
 
 #

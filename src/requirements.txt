@@ -40,3 +40,6 @@ tzdata==2026.1
 urllib3==2.6.3
 Werkzeug==3.1.8
 zipp==3.23.1
+apache-airflow==2.5.0
+apache-airflow-providers-apache-kafka==2.0.0
+kafka-python==2.0.2

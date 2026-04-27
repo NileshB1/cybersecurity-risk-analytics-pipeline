@@ -9,6 +9,7 @@ import os
 import logging
 import sys
 import time
+from pathlib import Path
 from typing import Optional, Dict, Any, Callable
 
 import pymongo
@@ -19,7 +20,7 @@ from kafka.kafka_config import KafkaConfig, configure_logger
 from kafka.cve_producer import RecordSerialiser
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env")
 
 
 # 

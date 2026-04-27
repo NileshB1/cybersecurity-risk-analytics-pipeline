@@ -17,7 +17,11 @@ from dotenv import load_dotenv
 import logging
 import sys
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import List
+
+
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env")
 
 def config_logger(name) -> logging.Logger:
     """
@@ -43,6 +47,11 @@ def config_logger(name) -> logging.Logger:
     logger.addHandler(ch)
     logger.addHandler(fh)
     return logger
+
+
+def configure_logger(name) -> logging.Logger:
+    """Backward-compatible alias used by the producer and consumer modules."""
+    return config_logger(name)
 
 # Topic Registry
 @dataclass(frozen=True)

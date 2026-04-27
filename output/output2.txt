@@ -51,3 +51,31 @@ PS D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Pr
 2026-04-27 18:17:50  [INFO    ]  CybersecConsumer  —  Connecting Kafka consumer (attempt 1/5)
 2026-04-27 18:17:50  [INFO    ]  CybersecConsumer  —  Consumer subscribed to topics: ['nvd_cve_stream', 'kev_stream', 'breach_stream']
 2026-04-27 18:17:50  [INFO    ]  CybersecConsumer  —  Consumer started. max_batches=200
+
+
+6.
+PS D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics> .\.venv\Scripts\python.exe src\extract\kev_extractor.py
+2026-04-27 18:52:31  [INFO    ]  Extractor.CISA_KEV_FEED  —  Starting extraction from: CISA_KEV_FEED
+2026-04-27 18:52:31  [INFO    ]  KevHttpFetcher  —  Downloading CISA KEV catalog from https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json
+2026-04-27 18:52:32  [INFO    ]  KevHttpFetcher  —  KEV catalog downloaded version=2026.04.24, released=2026-04-24T16:52:07.2233Z, records=1,583
+2026-04-27 18:52:32  [INFO    ]  Extractor.CISA_KEV_FEED  —  Yielding 1,583 raw KEV records for parsing
+2026-04-27 18:52:32  [INFO    ]  Extractor.CISA_KEV_FEED  —  Raw backup saved: .\kev_raw.json (1,583 records)
+2026-04-27 18:52:32  [INFO    ]  Extractor.CISA_KEV_FEED  —  Extraction complete — fetched=1,583  published=0  skipped=0  errors=0
+
+Done. 1,583 KEV records written to kev_raw.json
+
+
+7.
+PS D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics> .\.venv\Scripts\python.exe src\extract\breach_scraper.py
+2026-04-27 18:55:21  [INFO    ]  Extractor.PrivacyRights_Breaches  —  Starting extraction from: PrivacyRights_Breaches
+2026-04-27 18:55:21  [INFO    ]  BreachPageFetcher  —  Fetching: https://privacyrights.org/data-breaches
+2026-04-27 18:55:22  [WARNING ]  Extractor.PrivacyRights_Breaches  —  No <table> element found on this page.
+2026-04-27 18:55:22  [WARNING ]  Extractor.PrivacyRights_Breaches  —  No records found on page 1.
+2026-04-27 18:55:22  [INFO    ]  Extractor.PrivacyRights_Breaches  —  Scraping finished after 1 pages.
+2026-04-27 18:55:22  [INFO    ]  Extractor.PrivacyRights_Breaches  —  Raw backup saved: .\breach_raw.json (0 records)
+2026-04-27 18:55:22  [INFO    ]  Extractor.PrivacyRights_Breaches  —  Extraction complete — fetched=0  published=0  skipped=0  errors=0
+
+Done. 0 breach records written to breach_raw.json
+
+
+8.
