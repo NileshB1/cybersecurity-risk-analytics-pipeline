@@ -1,0 +1,53 @@
+1.
+D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics>.venv\Scripts\activate.bat
+
+2.
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics>pip install requests beautifulsoup4 pymongo psycopg2-binary python-dotenv python-dateutil lxml kafka-python apache-airflow
+
+3.
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics>pip freeze > requirements.txt
+
+4.
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics>python src\test\test_connections
+2026-04-27 17:41:15  [INFO    ]  ConnectionValidationRunner  —  =================================================================
+2026-04-27 17:41:15  [INFO    ]  ConnectionValidationRunner  —  Connection Validation Suite
+2026-04-27 17:41:15  [INFO    ]  ConnectionValidationRunner  —  Cybersecurity Risk Analytics Pipeline
+
+5. Error to reach to Kafka broker:
+PS D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics> .\.venv\Scripts\python.exe -c "from kafka.cve_consumer import CybersecConsumer; consumer = CybersecConsumer(); consumer.start(max_batches=200)"
+2026-04-27 18:13:03  [INFO    ]  KafkaConfig  —  Kafka bootstrap servers : ['localhost:9092']
+2026-04-27 18:13:03  [INFO    ]  KafkaConfig  —  Topics registered : ['nvd_cve_stream', 'kev_stream', 'breach_stream']
+2026-04-27 18:13:03  [INFO    ]  MongoWriter  —  MongoWriter connected to database 'None'
+2026-04-27 18:13:03  [INFO    ]  CybersecConsumer  —  Connecting Kafka consumer (attempt 1/5)
+2026-04-27 18:13:05  [WARNING ]  CybersecConsumer  —  No Kafka brokers available. Retrying in 5s....
+2026-04-27 18:13:10  [INFO    ]  CybersecConsumer  —  Connecting Kafka consumer (attempt 2/5)
+2026-04-27 18:13:12  [WARNING ]  CybersecConsumer  —  No Kafka brokers available. Retrying in 5s....
+2026-04-27 18:13:17  [INFO    ]  CybersecConsumer  —  Connecting Kafka consumer (attempt 3/5)
+2026-04-27 18:13:19  [WARNING ]  CybersecConsumer  —  No Kafka brokers available. Retrying in 5s....
+2026-04-27 18:13:24  [INFO    ]  CybersecConsumer  —  Connecting Kafka consumer (attempt 4/5)
+2026-04-27 18:13:26  [WARNING ]  CybersecConsumer  —  No Kafka brokers available. Retrying in 5s....
+2026-04-27 18:13:31  [INFO    ]  CybersecConsumer  —  Connecting Kafka consumer (attempt 5/5)
+2026-04-27 18:13:33  [WARNING ]  CybersecConsumer  —  No Kafka brokers available. Retrying in 5s....
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    from kafka.cve_consumer import CybersecConsumer; consumer = CybersecConsumer(); consumer.start(max_batches=200)
+                                                                ~~~~~~~~~~~~~~~~^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\kafka\cve_consumer.py", line 163, in __init__
+    self._connect_with_retry()
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\kafka\cve_consumer.py", line 191, in _connect_with_retry
+    raise ConnectionError(
+        f"Kafka consumer could not connect after {self.MAX_CONNECT_RETRIES} attempts."
+    )
+ConnectionError: Kafka consumer could not connect after 5 attempts.
+
+
+5. Kafka "No Kafka brokers available" issues is fixed:
+
+PS D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics> .\.venv\Scripts\python.exe -c "from kafka.cve_consumer import CybersecConsumer; consumer = CybersecConsumer(); consumer.start(max_batches=200)"
+2026-04-27 18:17:50  [INFO    ]  KafkaConfig  —  Kafka bootstrap servers : ['127.0.0.1:9092']
+2026-04-27 18:17:50  [INFO    ]  KafkaConfig  —  Topics registered : ['nvd_cve_stream', 'kev_stream', 'breach_stream']
+2026-04-27 18:17:50  [INFO    ]  MongoWriter  —  MongoWriter connected to database 'cybersecurity_db'
+2026-04-27 18:17:50  [INFO    ]  CybersecConsumer  —  Connecting Kafka consumer (attempt 1/5)
+2026-04-27 18:17:50  [INFO    ]  CybersecConsumer  —  Consumer subscribed to topics: ['nvd_cve_stream', 'kev_stream', 'breach_stream']
+2026-04-27 18:17:50  [INFO    ]  CybersecConsumer  —  Consumer started. max_batches=200
