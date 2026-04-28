@@ -217,8 +217,8 @@ def main():
         # Load each dataset independently so one bad file does not block the others.
         for label, loader, file_path in (
             ("kev", load_kev_data, kev_file),
-            ("cve", load_cve_data, cve_file),
             ("breach", load_breach_data, breach_file),
+            ("cve", load_cve_data, cve_file),
         ):
             try:
                 totals[label] = loader(writer, file_path)
