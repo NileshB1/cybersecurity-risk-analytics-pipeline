@@ -1,0 +1,35 @@
+1.
+psql -h localhost -U postgres -d postgres
+CREATE DATABASE cybersecurity_db;
+
+2.
+ psql -h localhost -U postgres -d postgres
+psql (17.2, server 18.3)
+WARNING: psql major version 17, server major version 18.
+         Some psql features might not work.
+Type "help" for help.
+
+postgres=# CREATE DATABASE cybersecurity_db;
+CREATE DATABASE
+postgres=# \q
+                                                                                                                                                             ✓
+
+  /drives/d/NCI/DataAnalytics/Projects/Analytics Programming and Data Visualisation Project-Sem1/cybersecurity_analytics/src   main 
+  2026-04-28   23:25.12 
+                                                                                                                                                             ✓
+
+  /drives/d/NCI/DataAnalytics/Projects/Analytics Programming and Data Visualisation Project-Sem1/cybersecurity_analytics/src   main 
+  2026-04-28   23:25.13  psql -h localhost -U postgres -d cybersecurity_db -f load/postgres_schema.sql
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
