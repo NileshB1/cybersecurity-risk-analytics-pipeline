@@ -32,7 +32,7 @@ class MongoWriter:
     Handles all MongoDB write operations for the consumer.
     """
 
-    BATCH_THRESHOLD = 200     # flush every 200 records per collection
+    BATCH_THRESHOLD = 1000     # flush every 1000 records per collection
 
     def __init__(self):
         self.logger = configure_logger("MongoWriter")
