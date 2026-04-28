@@ -1,0 +1,450 @@
+PS D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics> .\.venv\Scripts\python.exe src\load\json_to_mongo_loader.py
+2026-04-27 23:49:32  [INFO    ]  JsonToMongoLoader  —  ================================================================================
+2026-04-27 23:49:32  [INFO    ]  JsonToMongoLoader  —  MongoDB Raw Data Loader
+2026-04-27 23:49:32  [INFO    ]  JsonToMongoLoader  —  ================================================================================
+2026-04-27 23:49:32  [INFO    ]  MongoWriter  —  MongoWriter connected to database 'cybersecurity_db'
+2026-04-27 23:49:32  [INFO    ]  JsonToMongoLoader  —  Loading KEV data from kev_raw.json...
+2026-04-27 23:49:32  [INFO    ]  JsonToMongoLoader  —  Loaded 1583 records from kev_raw.json
+2026-04-27 23:49:37  [ERROR   ]  JsonToMongoLoader  —  Error during load: localhost:27017: [WinError 10061] No connection could be made because the target machine actively refused it (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 69efe7fceb699f7eb7e6a343, topology_type: Unknown, servers: [<ServerDescription ('localhost', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('localhost:27017: [WinError 10061] No connection could be made because the target machine actively refused it (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+Traceback (most recent call last):
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\load\json_to_mongo_loader.py", line 160, in main
+    totals["kev"] = load_kev_data(mongo_writer, kev_file)
+                    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\load\json_to_mongo_loader.py", line 99, in load_kev_data
+    mongo_writer.write_kev(record)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\kafka\cve_consumer.py", line 92, in write_kev
+    self._flush_collection("kev_raw", "cve_id")
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\kafka\cve_consumer.py", line 70, in _flush_collection
+    result = collection.bulk_write(operations, ordered=False)
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\_csot.py", line 125, in csot_wrapper
+    return func(self, *args, **kwargs)
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\collection.py", line 791, in bulk_write
+    bulk_api_result = blk.execute(write_concern, session, _Op.INSERT)
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\bulk.py", line 751, in execute
+    return self.execute_command(generator, write_concern, session, operation)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\bulk.py", line 604, in execute_command
+    _ = client._retryable_write(
+        self.is_retryable,
+    ...<4 lines>...
+        operation_id=op_id,
+    )
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2083, in _retryable_write
+    return self._retry_with_session(retryable, func, s, bulk, operation, operation_id)
+           ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 1968, in _retry_with_session
+    return self._retry_internal(
+           ~~~~~~~~~~~~~~~~~~~~^
+        func=func,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        operation_id=operation_id,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\_csot.py", line 125, in csot_wrapper
+    return func(self, *args, **kwargs)
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2014, in _retry_internal
+    ).run()
+      ~~~^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2763, in run
+    return self._read() if self._is_read else self._write()
+                                              ~~~~~~~~~~~^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2873, in _write
+    self._server = self._get_server()
+                   ~~~~~~~~~~~~~~~~^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2856, in _get_server
+    return self._client._select_server(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._server_selector,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        operation_id=self._operation_id,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 1833, in _select_server
+    server = topology.select_server(
+        server_selector,
+    ...<2 lines>...
+        operation_id=operation_id,
+    )
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 428, in select_server
+    server = self._select_server(
+        selector,
+    ...<4 lines>...
+        operation_id=operation_id,
+    )
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 402, in _select_server
+    servers = self.select_servers(
+        selector,
+    ...<4 lines>...
+        deprioritized_servers,
+    )
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 298, in select_servers
+    server_descriptions = self._select_servers_loop(
+        selector,
+    ...<4 lines>...
+        deprioritized_servers=deprioritized_servers,
+    )
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 359, in _select_servers_loop
+    raise ServerSelectionTimeoutError(
+        f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+    )
+pymongo.errors.ServerSelectionTimeoutError: localhost:27017: [WinError 10061] No connection could be made because the target machine actively refused it (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 69efe7fceb699f7eb7e6a343, topology_type: Unknown, servers: [<ServerDescription ('localhost', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('localhost:27017: [WinError 10061] No connection could be made because the target machine actively refused it (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+2026-04-27 23:49:37  [INFO    ]  MongoWriter  —  Flushing all remaining buffered records to MongoDB....
+Traceback (most recent call last):
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\load\json_to_mongo_loader.py", line 160, in main
+    totals["kev"] = load_kev_data(mongo_writer, kev_file)
+                    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\load\json_to_mongo_loader.py", line 99, in load_kev_data
+    mongo_writer.write_kev(record)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\kafka\cve_consumer.py", line 92, in write_kev
+    self._flush_collection("kev_raw", "cve_id")
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\kafka\cve_consumer.py", line 70, in _flush_collection
+    result = collection.bulk_write(operations, ordered=False)
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\_csot.py", line 125, in csot_wrapper
+    return func(self, *args, **kwargs)
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\collection.py", line 791, in bulk_write
+    bulk_api_result = blk.execute(write_concern, session, _Op.INSERT)
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\bulk.py", line 751, in execute
+    return self.execute_command(generator, write_concern, session, operation)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\bulk.py", line 604, in execute_command
+    _ = client._retryable_write(
+        self.is_retryable,
+    ...<4 lines>...
+        operation_id=op_id,
+    )
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2083, in _retryable_write
+    return self._retry_with_session(retryable, func, s, bulk, operation, operation_id)
+           ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 1968, in _retry_with_session
+    return self._retry_internal(
+           ~~~~~~~~~~~~~~~~~~~~^
+        func=func,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        operation_id=operation_id,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\_csot.py", line 125, in csot_wrapper
+    return func(self, *args, **kwargs)
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2014, in _retry_internal
+    ).run()
+      ~~~^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2763, in run
+    return self._read() if self._is_read else self._write()
+                                              ~~~~~~~~~~~^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2873, in _write
+    self._server = self._get_server()
+                   ~~~~~~~~~~~~~~~~^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2856, in _get_server
+    return self._client._select_server(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._server_selector,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        operation_id=self._operation_id,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 1833, in _select_server
+    server = topology.select_server(
+        server_selector,
+    ...<2 lines>...
+        operation_id=operation_id,
+    )
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 428, in select_server
+    server = self._select_server(
+        selector,
+    ...<4 lines>...
+        operation_id=operation_id,
+    )
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 402, in _select_server
+    servers = self.select_servers(
+        selector,
+    ...<4 lines>...
+        deprioritized_servers,
+    )
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 298, in select_servers
+    server_descriptions = self._select_servers_loop(
+        selector,
+    ...<4 lines>...
+        deprioritized_servers=deprioritized_servers,
+    )
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 359, in _select_servers_loop
+    raise ServerSelectionTimeoutError(
+        f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+    )
+pymongo.errors.ServerSelectionTimeoutError: localhost:27017: [WinError 10061] No connection could be made because the target machine actively refused it (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 69efe7fceb699f7eb7e6a343, topology_type: Unknown, servers: [<ServerDescription ('localhost', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('localhost:27017: [WinError 10061] No connection could be made because the target machine actively refused it (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\load\json_to_mongo_loader.py", line 179, in main
+    sys.exit(1)
+    ~~~~~~~~^^^
+SystemExit: 1
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\load\json_to_mongo_loader.py", line 185, in <module>
+    main()
+    ~~~~^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\load\json_to_mongo_loader.py", line 181, in main
+    mongo_writer.close()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\kafka\cve_consumer.py", line 110, in close
+    self.flush_all()
+    ~~~~~~~~~~~~~~^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\kafka\cve_consumer.py", line 103, in flush_all
+    self._flush_collection("kev_raw", "cve_id")
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\kafka\cve_consumer.py", line 70, in _flush_collection
+    result = collection.bulk_write(operations, ordered=False)
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\_csot.py", line 125, in csot_wrapper
+    return func(self, *args, **kwargs)
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\collection.py", line 791, in bulk_write
+    bulk_api_result = blk.execute(write_concern, session, _Op.INSERT)
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\bulk.py", line 751, in execute
+    return self.execute_command(generator, write_concern, session, operation)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\bulk.py", line 604, in execute_command
+    _ = client._retryable_write(
+        self.is_retryable,
+    ...<4 lines>...
+        operation_id=op_id,
+    )
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2083, in _retryable_write
+    return self._retry_with_session(retryable, func, s, bulk, operation, operation_id)
+           ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 1968, in _retry_with_session
+    return self._retry_internal(
+           ~~~~~~~~~~~~~~~~~~~~^
+        func=func,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        operation_id=operation_id,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\_csot.py", line 125, in csot_wrapper
+    return func(self, *args, **kwargs)
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2014, in _retry_internal
+    ).run()
+      ~~~^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2763, in run
+    return self._read() if self._is_read else self._write()
+                                              ~~~~~~~~~~~^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2873, in _write
+    self._server = self._get_server()
+                   ~~~~~~~~~~~~~~~~^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2856, in _get_server
+    return self._client._select_server(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._server_selector,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        operation_id=self._operation_id,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 1833, in _select_server
+    server = topology.select_server(
+        server_selector,
+    ...<2 lines>...
+        operation_id=operation_id,
+    )
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 428, in select_server
+    server = self._select_server(
+        selector,
+    ...<4 lines>...
+        operation_id=operation_id,
+    )
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 402, in _select_server
+    servers = self.select_servers(
+        selector,
+    ...<4 lines>...
+        deprioritized_servers,
+    )
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 298, in select_servers
+    server_descriptions = self._select_servers_loop(
+        selector,
+    ...<4 lines>...
+        deprioritized_servers=deprioritized_servers,
+    )
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 359, in _select_servers_loop
+    raise ServerSelectionTimeoutError(
+        f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+    )
+pymongo.errors.ServerSelectionTimeoutError: localhost:27017: [WinError 10061] No connection could be made because the target machine actively refused it (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 69efe7fceb699f7eb7e6a343, topology_type: Unknown, servers: [<ServerDescription ('localhost', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('localhost:27017: [WinError 10061] No connection could be made because the target machine actively refused it (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+PS D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics>
+PS D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics>
+PS D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics>
+PS D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics>
+PS D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics>
+PS D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics>
+PS D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics>
+PS D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics>
+PS D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics>
+PS D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics> .\.venv\Scripts\python.exe src\load\json_to_mongo_loader.py
+2026-04-27 23:57:17  [INFO    ]  JsonToMongoLoader  —  ================================================================================
+2026-04-27 23:57:17  [INFO    ]  JsonToMongoLoader  —  MongoDB Raw Data Loader
+2026-04-27 23:57:17  [INFO    ]  JsonToMongoLoader  —  ================================================================================
+2026-04-27 23:57:17  [INFO    ]  MongoWriter  —  MongoWriter connected to database 'cybersecurity_db'
+2026-04-27 23:57:17  [INFO    ]  JsonToMongoLoader  —  Loading KEV data from kev_raw.json...
+2026-04-27 23:57:17  [INFO    ]  JsonToMongoLoader  —  Loaded 1583 records from kev_raw.json
+2026-04-27 23:57:17  [INFO    ]  MongoWriter  —  [kev_raw] flushed 200 records (upserted=0, modified=0, total so far=200)
+2026-04-27 23:57:18  [INFO    ]  MongoWriter  —  [kev_raw] flushed 200 records (upserted=0, modified=0, total so far=400)
+2026-04-27 23:57:18  [INFO    ]  JsonToMongoLoader  —    Processed 500/1583 KEV records...
+2026-04-27 23:57:18  [INFO    ]  MongoWriter  —  [kev_raw] flushed 200 records (upserted=0, modified=0, total so far=600)
+2026-04-27 23:57:18  [INFO    ]  MongoWriter  —  [kev_raw] flushed 200 records (upserted=0, modified=0, total so far=800)
+2026-04-27 23:57:18  [INFO    ]  MongoWriter  —  [kev_raw] flushed 200 records (upserted=0, modified=0, total so far=1000)
+2026-04-27 23:57:18  [INFO    ]  JsonToMongoLoader  —    Processed 1000/1583 KEV records...
+2026-04-27 23:57:18  [INFO    ]  MongoWriter  —  [kev_raw] flushed 200 records (upserted=0, modified=0, total so far=1200)
+2026-04-27 23:57:18  [INFO    ]  MongoWriter  —  [kev_raw] flushed 200 records (upserted=0, modified=0, total so far=1400)
+2026-04-27 23:57:18  [INFO    ]  JsonToMongoLoader  —    Processed 1500/1583 KEV records...
+2026-04-27 23:57:18  [INFO    ]  JsonToMongoLoader  —  KEV load complete: 1583 records queued
+2026-04-27 23:57:18  [INFO    ]  JsonToMongoLoader  —  Loading CVE data from cve_raw.json...
+2026-04-27 23:57:18  [INFO    ]  JsonToMongoLoader  —  File size 191.7MB — attempting streaming parse with ijson
+2026-04-27 23:57:20  [INFO    ]  JsonToMongoLoader  —  Streamed 346827 records from JSON array in cve_raw.json
+2026-04-27 23:57:20  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=200)
+2026-04-27 23:57:20  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=400)
+2026-04-27 23:57:20  [INFO    ]  JsonToMongoLoader  —    Processed 500/346827 CVE records...
+2026-04-27 23:57:20  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=600)
+2026-04-27 23:57:20  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=800)
+2026-04-27 23:57:20  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=1000)
+2026-04-27 23:57:20  [INFO    ]  JsonToMongoLoader  —    Processed 1000/346827 CVE records...
+2026-04-27 23:57:20  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=1200)
+2026-04-27 23:57:20  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=1400)
+2026-04-27 23:57:20  [INFO    ]  JsonToMongoLoader  —    Processed 1500/346827 CVE records...
+2026-04-27 23:57:21  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=1600)
+2026-04-27 23:57:21  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=1800)
+2026-04-27 23:57:21  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=2000)
+2026-04-27 23:57:21  [INFO    ]  JsonToMongoLoader  —    Processed 2000/346827 CVE records...
+2026-04-27 23:57:21  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=2200)
+2026-04-27 23:57:21  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=2400)
+2026-04-27 23:57:21  [INFO    ]  JsonToMongoLoader  —    Processed 2500/346827 CVE records...
+2026-04-27 23:57:22  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=2600)
+2026-04-27 23:57:22  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=2800)
+2026-04-27 23:57:22  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=3000)
+2026-04-27 23:57:22  [INFO    ]  JsonToMongoLoader  —    Processed 3000/346827 CVE records...
+2026-04-27 23:57:23  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=3200)
+2026-04-27 23:57:23  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=3400)
+2026-04-27 23:57:23  [INFO    ]  JsonToMongoLoader  —    Processed 3500/346827 CVE records...
+2026-04-27 23:57:23  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=3600)
+2026-04-27 23:57:24  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=3800)
+2026-04-27 23:57:24  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=4000)
+2026-04-27 23:57:24  [INFO    ]  JsonToMongoLoader  —    Processed 4000/346827 CVE records...
+2026-04-27 23:57:25  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=4200)
+2026-04-27 23:57:25  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=4400)
+2026-04-27 23:57:25  [INFO    ]  JsonToMongoLoader  —    Processed 4500/346827 CVE records...
+2026-04-27 23:57:26  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=4600)
+2026-04-27 23:57:26  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=4800)
+2026-04-27 23:57:27  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=5000)
+2026-04-27 23:57:27  [INFO    ]  JsonToMongoLoader  —    Processed 5000/346827 CVE records...
+2026-04-27 23:57:27  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=5200)
+2026-04-27 23:57:28  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=5400)
+2026-04-27 23:57:28  [INFO    ]  JsonToMongoLoader  —    Processed 5500/346827 CVE records...
+2026-04-27 23:57:29  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=5600)
+2026-04-27 23:57:29  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=5800)
+2026-04-27 23:57:30  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=6000)
+2026-04-27 23:57:30  [INFO    ]  JsonToMongoLoader  —    Processed 6000/346827 CVE records...
+2026-04-27 23:57:31  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=6200)
+2026-04-27 23:57:31  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=6400)
+2026-04-27 23:57:31  [INFO    ]  JsonToMongoLoader  —    Processed 6500/346827 CVE records...
+2026-04-27 23:57:32  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=6600)
+2026-04-27 23:57:33  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=6800)
+2026-04-27 23:57:34  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=7000)
+2026-04-27 23:57:34  [INFO    ]  JsonToMongoLoader  —    Processed 7000/346827 CVE records...
+2026-04-27 23:57:34  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=7200)
+2026-04-27 23:57:35  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=7400)
+2026-04-27 23:57:35  [INFO    ]  JsonToMongoLoader  —    Processed 7500/346827 CVE records...
+2026-04-27 23:57:36  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=7600)
+2026-04-27 23:57:37  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=7800)
+2026-04-27 23:57:38  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=8000)
+2026-04-27 23:57:38  [INFO    ]  JsonToMongoLoader  —    Processed 8000/346827 CVE records...
+2026-04-27 23:57:39  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=8200)
+2026-04-27 23:57:40  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=8400)
+2026-04-27 23:57:40  [INFO    ]  JsonToMongoLoader  —    Processed 8500/346827 CVE records...
+2026-04-27 23:57:40  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=8600)
+2026-04-27 23:57:41  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=8800)
+2026-04-27 23:57:42  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=9000)
+2026-04-27 23:57:42  [INFO    ]  JsonToMongoLoader  —    Processed 9000/346827 CVE records...
+2026-04-27 23:57:43  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=9200)
+2026-04-27 23:57:44  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=9400)
+2026-04-27 23:57:44  [INFO    ]  JsonToMongoLoader  —    Processed 9500/346827 CVE records...
+2026-04-27 23:57:45  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=9600)
+2026-04-27 23:57:47  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=9800)
+2026-04-27 23:57:48  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=10000)
+2026-04-27 23:57:48  [INFO    ]  JsonToMongoLoader  —    Processed 10000/346827 CVE records...
+2026-04-27 23:57:49  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=10200)
+2026-04-27 23:57:50  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=10400)
+2026-04-27 23:57:50  [INFO    ]  JsonToMongoLoader  —    Processed 10500/346827 CVE records...
+2026-04-27 23:57:51  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=10600)
+2026-04-27 23:57:53  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=10800)
+2026-04-27 23:57:54  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=11000)
+2026-04-27 23:57:54  [INFO    ]  JsonToMongoLoader  —    Processed 11000/346827 CVE records...
+2026-04-27 23:57:55  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=11200)
+2026-04-27 23:57:56  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=11400)
+2026-04-27 23:57:56  [INFO    ]  JsonToMongoLoader  —    Processed 11500/346827 CVE records...
+2026-04-27 23:57:58  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=11600)
+2026-04-27 23:57:59  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=11800)
+2026-04-27 23:58:00  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=12000)
+2026-04-27 23:58:00  [INFO    ]  JsonToMongoLoader  —    Processed 12000/346827 CVE records...
+2026-04-27 23:58:02  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=12200)
+2026-04-27 23:58:03  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=12400)
+2026-04-27 23:58:03  [INFO    ]  JsonToMongoLoader  —    Processed 12500/346827 CVE records...
+2026-04-27 23:58:05  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=12600)
+2026-04-27 23:58:06  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=12800)
+2026-04-27 23:58:08  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=13000)
+2026-04-27 23:58:08  [INFO    ]  JsonToMongoLoader  —    Processed 13000/346827 CVE records...
+2026-04-27 23:58:09  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=13200)
+2026-04-27 23:58:11  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=13400)
+2026-04-27 23:58:11  [INFO    ]  JsonToMongoLoader  —    Processed 13500/346827 CVE records...
+2026-04-27 23:58:12  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=13600)
+2026-04-27 23:58:14  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=13800)
+2026-04-27 23:58:15  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=14000)
+2026-04-27 23:58:15  [INFO    ]  JsonToMongoLoader  —    Processed 14000/346827 CVE records...
+2026-04-27 23:58:17  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=14200)
+2026-04-27 23:58:19  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=14400)
+2026-04-27 23:58:19  [INFO    ]  JsonToMongoLoader  —    Processed 14500/346827 CVE records...
+2026-04-27 23:58:20  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=14600)
+2026-04-27 23:58:22  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=14800)
+2026-04-27 23:58:24  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=15000)
+2026-04-27 23:58:24  [INFO    ]  JsonToMongoLoader  —    Processed 15000/346827 CVE records...
+2026-04-27 23:58:25  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=15200)
+2026-04-27 23:58:27  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=15400)
+2026-04-27 23:58:27  [INFO    ]  JsonToMongoLoader  —    Processed 15500/346827 CVE records...
+2026-04-27 23:58:29  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=15600)
+2026-04-27 23:58:31  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=15800)
+2026-04-27 23:58:33  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=16000)
+2026-04-27 23:58:33  [INFO    ]  JsonToMongoLoader  —    Processed 16000/346827 CVE records...
+2026-04-27 23:58:35  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=16200)
+2026-04-27 23:58:36  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=16400)
+2026-04-27 23:58:36  [INFO    ]  JsonToMongoLoader  —    Processed 16500/346827 CVE records...
+2026-04-27 23:58:38  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=16600)
+2026-04-27 23:58:40  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=16800)
+2026-04-27 23:58:42  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=17000)
+2026-04-27 23:58:42  [INFO    ]  JsonToMongoLoader  —    Processed 17000/346827 CVE records...
+2026-04-27 23:58:44  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=17200)
+2026-04-27 23:58:46  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=17400)
+2026-04-27 23:58:46  [INFO    ]  JsonToMongoLoader  —    Processed 17500/346827 CVE records...
+2026-04-27 23:58:48  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=17600)
+2026-04-27 23:58:50  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=17800)
+2026-04-27 23:58:52  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=18000)
+2026-04-27 23:58:52  [INFO    ]  JsonToMongoLoader  —    Processed 18000/346827 CVE records...
+2026-04-27 23:58:55  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=18200)
+2026-04-27 23:58:57  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=18400)
+2026-04-27 23:58:57  [INFO    ]  JsonToMongoLoader  —    Processed 18500/346827 CVE records...
+2026-04-27 23:58:59  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=18600)
+2026-04-27 23:59:01  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=18800)
+2026-04-27 23:59:03  [INFO    ]  MongoWriter  —  [cve_raw] flushed 200 records (upserted=200, modified=0, total so far=19000)
+2026-04-27 23:59:03  [INFO    ]  JsonToMongoLoader  —    Processed 19000/346827 CVE records...
