@@ -130,11 +130,7 @@ class OverlapAnalyser:
         cve_df: pd.DataFrame,
         kev_df: pd.DataFrame
     ) -> Dict[str, Any]:
-        """
-        Verify how many KEV records have a matching CVE in NVD data.
-        It should be close to 100% since KEV IDs come from NVD originally,
-        but there could be some  gaps if our NVD pull was partial.
-        """
+      
         if cve_df.empty or kev_df.empty:
             self.logger.warning("One or both dataframes empty - cannot check overlap")
             return {}
@@ -248,33 +244,29 @@ class MergeStrategyReport:
             "",
             "CVE <-> KEV Join",
             "-" * 30,
-            "  Join field : cve_id (exact match)",
-            "  Type : LEFT JOIN (keep all CVEs, add KEV fields where matched)",
-            f"  Match rate : {overlap_stats.get('overlap_pct', 0):.1f}%",
-            f"  Matched : {overlap_stats.get('matched', 0):,} records",
-            f"  Unmatched : {overlap_stats.get('unmatched', 0):,} (no KEV entry = not exploited)",
+            "Join field : cve_id (exact match)",
+            "Type : LEFT JOIN (keep all CVEs, add KEV fields where matched)",
+            f"Match rate : {overlap_stats.get('overlap_pct', 0):.1f}%",
+            f"Matched : {overlap_stats.get('matched', 0):,} records",
+            f"Unmatched : {overlap_stats.get('unmatched', 0):,} (no KEV entry = not exploited)",
             "",
-            "  Key derived field:",
-            "  time_to_exploit = exploitation_date - publish_date (in days)",
-            "  Negative values = CVE embargoed before public disclosure",
-            "  Null values = CVE not in CISA KEV catalog",
+            "Key derived field:",
+            "time_to_exploit = exploitation_date - publish_date (in days)",
+            "Negative values = CVE embargoed before public disclosure",
+            "Null values = CVE not in CISA KEV catalog",
             "",
             "CVE/KEV <-> Breach Join",
             "-" * 30,
-            "  Join field : vendor (fuzzy / normalised match)",
-            "  Approach : after vendor normalisation in transformer.py",
-            "                we join on LOWER(vendor) = LOWER(industry)",
-            "  Limitation : industry field in breach data is a sector code",
-            "                not a company name, so this is an imperfect join at best",
-            "  Workaround : Neo4j graph captures vendor-product-org",
-            "                many-to-many relationships that a flat join cannot represent cleanly",
+            "Join field : vendor (fuzzy / normalised match)",
+            "Approach : after vendor normalisation in transformer.py, we join on LOWER(vendor) = LOWER(industry)",
+            "Limitation : industry field in breach data is a sector code, not a company name, so this is an imperfect join at best",
+            "Workaround : Neo4j graph captures vendor-product-org","many-to-many relationships that a flat join cannot represent cleanly",
             "",
             "Neo4j Graph Model",
             "-" * 30,
-            "  Nodes : Vulnerability, Software, Organization, Industry",
-            "  Relations : EXPLOITS, AFFECTS, BREACHED, BELONGS_TO",
-            "  Purpose : captures many-to-many relationships that a flat",
-            "                join cannot represent cleanly",
+            "Nodes : Vulnerability, Software, Organization, Industry",
+            "Relations : EXPLOITS, AFFECTS, BREACHED, BELONGS_TO",
+            "Purpose : captures many-to-many relationships that a flat, join cannot represent cleanly",
             "",
             "=" * 60,
         ]
@@ -314,8 +306,7 @@ class DatasetMerger:
 
         if cve_df.empty and kev_df.empty and breach_df.empty:
             self.logger.error(
-                "All the three datasets are empty. "
-                "Run the extractors first to generate the needed JSON files."
+                "All the three datasets are empty. Run the extractors first to generate the needed JSON files."
             )
             return
 
