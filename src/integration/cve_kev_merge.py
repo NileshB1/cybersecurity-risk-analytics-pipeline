@@ -75,17 +75,13 @@ class PostgresReader:
 
     def get_kev(self) -> pd.DataFrame:
         return self.read_table(
-            "SELECT cve_id, vendor, product, vulnerability_name, exploitation_date, required_action "
-            "FROM "
-            "exploited_vulnerabilities;",
+            "SELECT cve_id, vendor, product, vulnerability_name, exploitation_date, required_action FROM exploited_vulnerabilities;",
             label="exploited_vulnerabilities"
         )
 
     def get_breaches(self) -> pd.DataFrame:
         return self.read_table(
-            "SELECT id, organisation, industry, breach_type, "
-            "       breach_date, records_exposed, state "
-            "FROM breaches;",
+            "SELECT id, organisation, industry, breach_type, breach_date, records_exposed, state FROM breaches;",
             label="breaches"
         )
 
@@ -122,7 +118,7 @@ class TimeToExploitCalculator:
         neg_count = (df["time_to_exploit_days"] < 0).sum()
         if neg_count > 0:
             self.logger.info(
-                f"  {neg_count} records with negative time_to_exploit "
+                f"{neg_count} records with negative time_to_exploit "
                 f"(exploitation before NVD publication - likely zero-days or embargoed CVEs)"
             )
 
@@ -168,14 +164,14 @@ class TimeToExploitCalculator:
             return {}
 
         return {
-            "count":          len(valid),
-            "mean_days":      round(valid.mean(), 1),
-            "median_days":    round(valid.median(), 1),
-            "min_days":       int(valid.min()),
-            "max_days":       int(valid.max()),
-            "pct_within_7":   round((valid <= 7).sum()  / len(valid) * 100, 1),
-            "pct_within_30":  round((valid <= 30).sum() / len(valid) * 100, 1),
-            "pct_within_90":  round((valid <= 90).sum() / len(valid) * 100, 1),
+            "count": len(valid),
+            "mean_days": round(valid.mean(), 1),
+            "median_days": round(valid.median(), 1),
+            "min_days": int(valid.min()),
+            "max_days": int(valid.max()),
+            "pct_within_7": round((valid <= 7).sum()  / len(valid) * 100, 1),
+            "pct_within_30": round((valid <= 30).sum() / len(valid) * 100, 1),
+            "pct_within_90": round((valid <= 90).sum() / len(valid) * 100, 1),
         }
 
 
@@ -198,8 +194,7 @@ class CveKevJoiner:
 
         if kev_df.empty:
             self.logger.warning(
-                "KEV dataframe is empty - merge will have no exploited the records. "
-                "Check if the exploited_vulnerabilities table in PostgreSQL is populated."
+                "KEV dataframe is empty - merge will have no exploited the records. Check if the exploited_vulnerabilities table in PostgreSQL is populated."
             )
 
         self.logger.info(
@@ -249,17 +244,15 @@ class MergeOutputWriter:
         return path
 
     def save_exploited_only(self, merged_df: pd.DataFrame) -> pd.DataFrame:
-        """extract just the exploited rows and just save separately"""
+       
         exploited = merged_df[merged_df["is_exploited"] == True].copy()
         self.save_csv(exploited, "exploited_cves_enriched.csv")
         return exploited
 
     def save_time_to_exploit(self, merged_df: pd.DataFrame) -> pd.DataFrame:
-        """save just the time_to_exploit analysis columns"""
+        
         cols = [
-            "cve_id", "vendor", "severity", "publish_date",
-            "exploitation_date", "time_to_exploit_days", "exploit_window",
-            "kev_vendor", "product"
+            "cve_id", "vendor", "severity", "publish_date", "exploitation_date", "time_to_exploit_days", "exploit_window", "kev_vendor", "product"
         ]
         
         existing_cols = [c for c in cols if c in merged_df.columns]
