@@ -464,8 +464,8 @@ class GraphInsightsRunner:
             self._writer.save(org_central, "organisation_centrality.csv")
             results["org_centrality"] = org_central
 
-            detector    = CommunityDetector(runner)
-            sim_matrix  = detector.detect_communities()
+            detector = CommunityDetector(runner)
+            sim_matrix = detector.detect_communities()
             communities = detector.get_community_assignments(sim_matrix)
 
             if not sim_matrix.empty:
@@ -474,8 +474,8 @@ class GraphInsightsRunner:
             results["communities"] = communities
 
           
-            ranker    = VendorRiskRanker(runner)
-            risk_df   = ranker.compute_risk_scores(top_n=20)
+            ranker = VendorRiskRanker(runner)
+            risk_df = ranker.compute_risk_scores(top_n=20)
             self._writer.save(risk_df, "vendor_risk_scores.csv")
             results["vendor_risk"] = risk_df
 
