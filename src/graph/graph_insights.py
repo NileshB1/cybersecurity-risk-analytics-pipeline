@@ -119,20 +119,10 @@ class DegreeCentralityAnalyser:
             MATCH (v:Vulnerability)
             OPTIONAL MATCH (v)-[e:EXPLOITS]->()
             WITH v,
-                 COUNT(e) AS exploits_degree,
-                 v.severity AS severity,
-                 v.vendor AS vendor,
-                 v.publish_date AS publish_date,
-                 v.is_exploited AS is_exploited
+                 COUNT(e) AS exploits_degree, v.severity AS severity, v.vendor AS vendor, v.publish_date AS publish_date, v.is_exploited AS is_exploited
             ORDER BY exploits_degree DESC
             LIMIT {top_n}
-            RETURN v.cve_id AS cve_id,
-                   severity,
-                   vendor,
-                   publish_date,
-                   is_exploited,
-                   exploits_degree
-        """
+            RETURN v.cve_id AS cve_id,severity,vendor,publish_date, is_exploited, exploits_degree"""
         rows = self._runner.run(cypher)
         df   = pd.DataFrame(rows)
 
@@ -148,18 +138,10 @@ class DegreeCentralityAnalyser:
        
         cypher = f"""
             MATCH (s:Software)
-            OPTIONAL MATCH (v:Vulnerability)-[:EXPLOITS]->(s)
-            OPTIONAL MATCH (s)-[:AFFECTS]->(o:Organization)
-            WITH s,
-                 COUNT(DISTINCT v) AS incoming_cves,
-                 COUNT(DISTINCT o) AS affected_orgs
-            ORDER BY (incoming_cves + affected_orgs) DESC
+            OPTIONAL MATCH (v:Vulnerability)-[:EXPLOITS]->(s) OPTIONAL MATCH (s)-[:AFFECTS]->(o:Organization) WITH s,
+            COUNT(DISTINCT v) AS incoming_cves, COUNT(DISTINCT o) AS affected_orgs ORDER BY (incoming_cves + affected_orgs) DESC
             LIMIT {top_n}
-            RETURN s.vendor AS vendor,
-                   s.product AS product,
-                   incoming_cves,
-                   affected_orgs,
-                   (incoming_cves + affected_orgs) AS total_degree
+            RETURN s.vendor AS vendor, s.product AS product, incoming_cves, affected_orgs, (incoming_cves + affected_orgs) AS total_degree
         """
         rows = self._runner.run(cypher)
         df   = pd.DataFrame(rows)
@@ -176,15 +158,8 @@ class DegreeCentralityAnalyser:
         
         cypher = f"""
             MATCH (o:Organization)-[r:BREACHED_IN]->()
-            WITH o,
-                 COUNT(r) AS breach_events,
-                 SUM(r.records_exposed) AS total_records
-            ORDER BY breach_events DESC
-            LIMIT {top_n}
-            RETURN o.org_name AS organisation,
-                   o.industry AS industry,
-                   breach_events,
-                   total_records
+            WITH o, COUNT(r) AS breach_events, SUM(r.records_exposed) AS total_records ORDER BY breach_events DESC
+            LIMIT {top_n} RETURN o.org_name AS organisation, o.industry AS industry, breach_events, total_records
         """
         rows = self._runner.run(cypher)
         return pd.DataFrame(rows)
@@ -347,15 +322,9 @@ class VendorRiskRanker:
         cypher = f"""
             MATCH (s:Software)
             OPTIONAL MATCH (v:Vulnerability {{is_exploited: true}})-[:EXPLOITS]->(s)
-            OPTIONAL MATCH (s)-[:AFFECTS]->(o:Organization)
-            WITH s.vendor AS vendor,
-                 COUNT(DISTINCT v) AS exploited_cves,
-                 AVG(v.severity) AS avg_severity,
-                 COUNT(DISTINCT o) AS affected_orgs
-            WHERE vendor IS NOT NULL
-            RETURN vendor, exploited_cves, avg_severity, affected_orgs
-            ORDER BY exploited_cves DESC
-            LIMIT {top_n}
+            OPTIONAL MATCH (s)-[:AFFECTS]->(o:Organization) WITH s.vendor AS vendor, COUNT(DISTINCT v) AS exploited_cves, AVG(v.severity) AS avg_severity,
+            COUNT(DISTINCT o) AS affected_orgs WHERE vendor IS NOT NULL RETURN vendor, exploited_cves, avg_severity, affected_orgs
+            ORDER BY exploited_cves DESC LIMIT {top_n}
         """
         rows = self._runner.run(cypher)
         if not rows:
