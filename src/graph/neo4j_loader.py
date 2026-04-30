@@ -41,11 +41,11 @@ def configure_logger(name: str) -> logging.Logger:
 class Neo4jConnection:
 
     def __init__(self):
-        self.logger   = configure_logger("Neo4jConnection")
-        self._uri     = os.getenv("NEO4J_URI","bolt://localhost:7687")
-        self._user    = os.getenv("NEO4J_USER","neo4j")
+        self.logger = configure_logger("Neo4jConnection")
+        self._uri = os.getenv("NEO4J_URI","bolt://localhost:7687")
+        self._user = os.getenv("NEO4J_USER","neo4j")
         self._password = os.getenv("NEO4J_PASSWORD","")
-        self._driver  = None
+        self._driver = None
 
     def connect(self) -> "Neo4jConnection":
         self.logger.info(f"Connecting to Neo4j at {self._uri}")
@@ -113,16 +113,15 @@ class GraphDataLoader:
         import psycopg2
         try:
             config = {
-                "host":     os.getenv("PG_HOST","localhost"),
-                "port":     os.getenv("PG_PORT","5432"),
-                "dbname":   os.getenv("PG_DB","cybersec_db"),
-                "user":     os.getenv("PG_USER","postgres"),
+                "host": os.getenv("PG_HOST","localhost"),
+                "port": os.getenv("PG_PORT","5432"),
+                "dbname": os.getenv("PG_DB","cybersec_db"),
+                "user": os.getenv("PG_USER","postgres"),
                 "password": os.getenv("PG_PASSWORD", ""),
             }
             conn = psycopg2.connect(**config, connect_timeout=10)
-            df   = pd.read_sql(
-                "SELECT id, organisation, industry, breach_date, "
-                "       records_exposed, state FROM breaches;",
+            df = pd.read_sql(
+                "SELECT id, organisation, industry, breach_date, records_exposed, state FROM breaches;",
                 conn
             )
             conn.close()
@@ -181,7 +180,7 @@ class NodeLoader:
         self._driver = driver
 
     def _run_batch(self, session, cypher: str, batch: List[Dict]) -> int:
-        """run one batched MERGE query, and then return count of rows processed"""
+        
         try:
             session.run(cypher, {"batch": batch})
             return len(batch)
@@ -190,9 +189,7 @@ class NodeLoader:
             return 0
 
     def load_vulnerability_nodes(self, merged_df: pd.DataFrame) -> int:
-        """
-        Create one Vulnerability node per unique CVE ID.
-        """
+       
         if merged_df.empty:
             return 0
 
@@ -239,18 +236,18 @@ class NodeLoader:
 
         rows = []
         for _, row in sw_df.iterrows():
-            vendor  = str(row.get("kev_vendor", "Unknown"))
+            vendor = str(row.get("kev_vendor", "Unknown"))
             product = str(row.get("product", "Unknown"))
             rows.append({
                 "software_id": f"{vendor}::{product}",
-                "vendor":      vendor,
-                "product":     product,
+                "vendor": vendor,
+                "product": product,
             })
 
         cypher = """
             UNWIND $batch AS row
             MERGE (s:Software {software_id: row.software_id})
-            SET s.vendor  = row.vendor,
+            SET s.vendor = row.vendor,
                 s.product = row.product
         """
 
@@ -284,7 +281,7 @@ class NodeLoader:
         return total
 
     def load_organization_nodes(self, breach_df: pd.DataFrame) -> int:
-        """Create one Organization node per unique organisation name"""
+        
         if breach_df.empty:
             return 0
 
@@ -296,15 +293,15 @@ class NodeLoader:
         for _, row in org_df.iterrows():
             rows.append({
                 "org_name": str(row.get("organisation", "")),
-                "industry": str(row.get("industry",     "Unknown")),
-                "state":    str(row.get("state",        "")),
+                "industry": str(row.get("industry", "Unknown")),
+                "state":    str(row.get("state", "")),
             })
 
         cypher = """
             UNWIND $batch AS row
             MERGE (o:Organization {org_name: row.org_name})
             SET o.industry = row.industry,
-                o.state    = row.state
+                o.state = row.state
         """
 
         total = 0
@@ -343,19 +340,19 @@ class RelationshipLoader:
 
         rows = []
         for _, row in exploited.iterrows():
-            vendor  = str(row.get("kev_vendor", "Unknown"))
+            vendor = str(row.get("kev_vendor", "Unknown"))
             product = str(row.get("product",    "Unknown"))
-            tte     = row.get("time_to_exploit_days")
+            tte = row.get("time_to_exploit_days")
             rows.append({
-                "cve_id":       str(row["cve_id"]),
-                "software_id":  f"{vendor}::{product}",
+                "cve_id": str(row["cve_id"]),
+                "software_id": f"{vendor}::{product}",
                 "days_to_exploit": int(tte) if pd.notna(tte) else None,
                 "exploit_date": str(row["exploitation_date"]) if pd.notna(row.get("exploitation_date")) else None,
             })
 
         cypher = """
             UNWIND $batch AS row
-            MATCH (v:Vulnerability {cve_id:      row.cve_id})
+            MATCH (v:Vulnerability {cve_id: row.cve_id})
             MATCH (s:Software {software_id: row.software_id})
             MERGE (v)-[r:EXPLOITS]->(s)
             SET r.days_to_exploit = row.days_to_exploit,
@@ -392,8 +389,8 @@ class RelationshipLoader:
 
         cypher = """
             UNWIND $batch AS row
-            MATCH (o:Organization {org_name:  row.org_name})
-            MATCH (i:Industry {name:      row.industry_name})
+            MATCH (o:Organization {org_name: row.org_name})
+            MATCH (i:Industry {name: row.industry_name})
             MERGE (o)-[r:BREACHED_IN]->(i)
             SET r.breach_date = row.breach_date,
                 r.records_exposed = row.records_exposed
