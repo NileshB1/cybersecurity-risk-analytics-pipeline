@@ -269,7 +269,7 @@ class VendorRiskSection:
             lines.append("  [No vendor risk data available]")
             return lines
 
-        lines.append("  Top 10 Vendors by Composite Risk Score:")
+        lines.append(" Top 10 Vendors by Composite Risk Score:")
         lines.append(
             f"  {'Rank':<5} {'Vendor':<25} {'Score':>6}  "
             f"{'Exploited':>10}  {'Avg CVSS':>9}  {'Orgs':>5}"
@@ -401,23 +401,11 @@ class DashboardSummaryExporter:
         return df
 
 
-# ---------------------------------------------------------------
-# GraphReportGenerator  (main class)
-# assembles all sections into one text file
-# ---------------------------------------------------------------
+# GraphReportGenerator  
+
 
 class GraphReportGenerator:
-    """
-    Reads all insight CSVs and generates a structured text report.
-    Output: graph/reports/graph_analytics_report.txt
-
-    Sections:
-        4.1  Graph Scale
-        4.2  Degree Centrality
-        4.3  Community Detection
-        4.4  Vendor Risk Ranking (RQ4)
-        4.5  Time-to-Exploit Graph Supplement (RQ5)
-    """
+    
 
     def __init__(self):
         self.logger   = configure_logger("GraphReportGenerator")
@@ -449,9 +437,8 @@ class GraphReportGenerator:
         # build all sections
         all_lines = [
             "=" * 65,
-            "  SECTION 4: GRAPH ANALYTICS REPORT",
+            " GRAPH ANALYTICS REPORT",
             "  Cybersecurity Incident and Vulnerability Risk Analytics",
-            "  Author: Teena (25141970)",
             f"  Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}",
             "=" * 65,
             "",
