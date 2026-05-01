@@ -474,19 +474,45 @@ class PostgresLoader:
 # python load/postgres_loader.py
 
 if __name__ == "__main__":
+    import sys
+    import os
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-    # just print row counts so we can check data landed
+    from transform.transformer import DataTransformer
+
+    print("\n#### Step 1: Reading from MongoDB and transforming...")
+    transformer = DataTransformer()
+    clean_cves, clean_kev, clean_breaches = transformer.run()
+
+    print(f"\nTransformer output is:")
+    print(f"CVE records : {len(clean_cves):,}")
+    print(f"KEV records: {len(clean_kev):,}")
+    print(f"Breach records: {len(clean_breaches):,}")
+
+    if len(clean_cves) == 0 and len(clean_kev) == 0 and len(clean_breaches) == 0:
+        print(f"\nERROR: Transformer returned 0 records.")
+        sys.exit(1)
+
+    print("\nStep 2: Loading into PostgreSQL....")
+    loader  = PostgresLoader()
+    success = loader.load_all(clean_cves, clean_kev, clean_breaches)
+
+    print("\n--- Final row counts are:")
     with PostgresConnection() as pg:
         conn = pg.get()
+        # Postgres tables are created already and exists on my local
+        #Note: Run 'postgres_schema.sql' file on local before running this script
         tables = [
-            "vulnerabilities", "exploited_vulnerabilities", "breaches",
+            "vulnerabilities",
+            "exploited_vulnerabilities",
+            "breaches",
             "industry_summary",
         ]
-        print("\nPostgreSQL row counts:")
         print("-" * 40)
         for t in tables:
             with conn.cursor() as cur:
                 cur.execute(f"SELECT COUNT(*) FROM {t};")
                 count = cur.fetchone()[0]
-                print(f"  {t:<30}  {count:>10,} rows")
+                status = "OK" if count > 0 else "EMPTY"
+                print(f"  {t:<30}  {count:>10,} rows  [{status}]")
         print("-" * 40)

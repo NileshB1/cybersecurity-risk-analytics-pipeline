@@ -11,6 +11,7 @@ Reads:
 """
 
 import json
+import argparse
 import sys
 from pathlib import Path
 
@@ -126,6 +127,70 @@ def load_json_file(file_path: Path) -> list:
         return []
 
 
+def prepare_cve_chunk_files(source_file: Path, chunk_count: int = 10) -> list[Path]:
+    """
+    Split the large CVE export into smaller files so they can be loaded one by one.
+
+    If the chunk files already exist, reuse them.
+    """
+
+    chunk_files = [
+        source_file.with_name(f"{source_file.stem}{index}{source_file.suffix}")
+        for index in range(1, chunk_count + 1)
+    ]
+
+    if all(chunk_file.exists() for chunk_file in chunk_files):
+        logger.info("Using existing CVE chunk files")
+        return chunk_files
+
+    logger.info(
+        f"Splitting {source_file.name} into {chunk_count} files before loading"
+    )
+
+    records = load_json_file(source_file)
+    if not records:
+        return [source_file]
+
+    chunk_size = max(1, (len(records) + chunk_count - 1) // chunk_count)
+    created_files = []
+
+    for index, chunk_file in enumerate(chunk_files, start=0):
+        start = index * chunk_size
+        end = min(start + chunk_size, len(records))
+
+        if start >= len(records):
+            break
+
+        chunk_records = records[start:end]
+
+        with open(chunk_file, "w", encoding="utf-8") as f:
+            json.dump(chunk_records, f, ensure_ascii=False, indent=2)
+
+        logger.info(
+            f"Created {chunk_file.name} with {len(chunk_records):,} CVE records"
+        )
+        created_files.append(chunk_file)
+
+    return created_files or [source_file]
+
+
+def resolve_loader_for_file(file_path: Path):
+    """Return the dataset loader that matches the provided file name."""
+
+    file_name = file_path.name.lower()
+
+    if file_name.startswith("cve_raw"):
+        return load_cve_data
+
+    if file_name.startswith("kev_raw"):
+        return load_kev_data
+
+    if file_name.startswith("breach_raw"):
+        return load_breach_data
+
+    return load_cve_data
+
+
 # 
 # Data loaders (per dataset)
 
@@ -189,6 +254,21 @@ def load_breach_data(writer: MongoWriter, file_path: Path) -> int:
 def main():
     """Run the full load process
     """
+    parser = argparse.ArgumentParser(description="Load JSON files into MongoDB")
+    parser.add_argument(
+        "-file",
+        dest="file",
+        help="Load a single JSON file (for example, cve_raw1.json) instead of all files",
+    )
+    parser.add_argument(
+        "-batch",
+        dest="batch",
+        type=int,
+        default=1000,
+        help="MongoDB flush threshold for this run (for example, 1000 or 5000)",
+    )
+    args = parser.parse_args()
+
     repo_root = Path.cwd()
 
     logger.info("=" * 50)
@@ -198,6 +278,7 @@ def main():
     # 
     # Initialize MongoDB writer
     try:
+        MongoWriter.BATCH_THRESHOLD = args.batch
         writer = MongoWriter()
     except Exception as err:
         logger.error(f"Could not initialize MongoWriter: {err}")
@@ -209,22 +290,50 @@ def main():
     kev_file = repo_root/"kev_raw.json"
     cve_file = repo_root /"cve_raw.json"
     breach_file = repo_root/"breach_raw.json"
+    cve_chunk_files = [] if args.file else prepare_cve_chunk_files(cve_file, 10)
 
     totals = {"kev": 0, "cve": 0, "breach": 0}
     failures = []
 
     try:
-        # Load each dataset independently so one bad file does not block the others.
-        for label, loader, file_path in (
-            ("kev", load_kev_data, kev_file),
-            ("breach", load_breach_data, breach_file),
-            ("cve", load_cve_data, cve_file),
-        ):
+        if args.file:
+            file_path = Path(args.file)
+            if not file_path.is_absolute():
+                file_path = repo_root / file_path
+
+            loader = resolve_loader_for_file(file_path)
+
             try:
-                totals[label] = loader(writer, file_path)
+                dataset_name = file_path.name.lower().split("_raw", 1)[0]
+                if dataset_name in totals:
+                    totals[dataset_name] = loader(writer, file_path)
+                else:
+                    totals["cve"] = loader(writer, file_path)
             except Exception as err:
-                failures.append(f"{label}: {err}")
-                logger.error(f"{label.upper()} load failed, continuing with remaining files", exc_info=True)
+                failures.append(f"{file_path.name}: {err}")
+                logger.error(f"Single-file load failed for {file_path.name}", exc_info=True)
+        else:
+            # Load each dataset independently so one bad file does not block the others.
+            for label, loader, file_path in (
+                ("kev", load_kev_data, kev_file),
+                ("breach", load_breach_data, breach_file),
+            ):
+                try:
+                    totals[label] = loader(writer, file_path)
+                except Exception as err:
+                    failures.append(f"{label}: {err}")
+                    logger.error(f"{label.upper()} load failed, continuing with remaining files", exc_info=True)
+
+            for cve_chunk_file in cve_chunk_files:
+                try:
+                    totals["cve"] += load_cve_data(writer, cve_chunk_file)
+                    writer.flush_all()
+                except Exception as err:
+                    failures.append(f"cve:{cve_chunk_file.name}: {err}")
+                    logger.error(
+                        f"CVE chunk load failed for {cve_chunk_file.name}, continuing with remaining files",
+                        exc_info=True,
+                    )
 
         logger.info("All records queued. Flushing to MongoDB...")
         writer.flush_all()
