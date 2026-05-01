@@ -1,0 +1,100 @@
+Steps for integration:
+1.
+D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics>.venv\Scripts\activate.bat
+
+2.
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python transform\transformer.py
+
+3. #Already ran this
+psql -h localhost -U postgres -d cybersecurity_db -f load/postgres_schema.sql
+
+4. Load PostgreSQL
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python load\postgres_loader.py
+2026-05-01 15:48:53  [INFO    ]  PostgresConnection  -  Connecting to PostgreSQL: host=localhost db=cybersecurity_db
+2026-05-01 15:48:53  [INFO    ]  PostgresConnection  -  ############ PostgreSQL connected OK
+
+PostgreSQL row counts:
+----------------------------------------
+  vulnerabilities                          0 rows
+  exploited_vulnerabilities                0 rows
+  breaches                                 0 rows
+  industry_summary                         0 rows
+----------------------------------------
+
+5. Correct the error in file "postgres_schema.sql" and ran again:
+
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python load\postgres_loader.py
+
+Step 1: Reading from MongoDB and transforming...
+2026-05-01 15:54:45  [INFO    ]  DataTransformer  —  DataTransformer starting full transform run....
+2026-05-01 15:54:45  [INFO    ]  MongoRawReader  —  Reading MongoDB collection: 'cve_raw'
+2026-05-01 15:54:46  [INFO    ]  MongoRawReader  —    346,827 documents read from 'cve_raw'
+2026-05-01 15:54:46  [INFO    ]  MongoRawReader  —  Reading MongoDB collection: 'kev_raw'
+2026-05-01 15:54:46  [INFO    ]  MongoRawReader  —    141,136 documents read from 'kev_raw'
+2026-05-01 15:54:46  [INFO    ]  MongoRawReader  —  Reading MongoDB collection: 'breach_raw'
+2026-05-01 15:54:47  [INFO    ]  MongoRawReader  —    49,933 documents read from 'breach_raw'
+2026-05-01 15:54:47  [INFO    ]  Cleaner.CVE  —  Cleaning 346,827 raw CVE records....
+2026-05-01 15:55:03  [INFO    ]  Cleaner.CVE  —  CVE cleaning done — kept=346,827  dropped=0
+2026-05-01 15:55:03  [INFO    ]  Cleaner.KEV  —  Cleaning 141,136 raw KEV records....
+2026-05-01 15:55:04  [INFO    ]  Cleaner.KEV  —  KEV cleaning done — kept=141,136  dropped=0
+2026-05-01 15:55:04  [INFO    ]  Cleaner.Breach  —  Cleaning 49,933 raw Breach records....
+2026-05-01 15:55:06  [INFO    ]  Cleaner.Breach  —  Breach cleaning done — kept=49,933  dropped=0
+2026-05-01 15:55:06  [INFO    ]  Deduplicator  —  [CVE] No duplicates found
+2026-05-01 15:55:06  [INFO    ]  Deduplicator  —  [KEV] No duplicates found
+2026-05-01 15:55:06  [INFO    ]  Deduplicator  —  [Breach] Removed 3 duplicates — 49,930 unique records remain
+2026-05-01 15:55:06  [INFO    ]  DateParser  —  DateParser — total=693,654  success=693,654  failed=0  skipped(null)=0
+2026-05-01 15:55:06  [INFO    ]  VendorNormaliser  —  VendorNormaliser — total=346,827  exact=346,827  substring=0  fallback(title-case)=0  null=0
+2026-05-01 15:55:06  [INFO    ]  DataTransformer  —  ========================================
+2026-05-01 15:55:06  [INFO    ]  DataTransformer  —    TRANSFORM SUMMARY
+2026-05-01 15:55:06  [INFO    ]  DataTransformer  —  =============================================
+2026-05-01 15:55:06  [INFO    ]  DataTransformer  —    Dataset           Raw    Cleaned    Dropped    Dupes    Final
+2026-05-01 15:55:06  [INFO    ]  DataTransformer  —  ----------------------------------------
+2026-05-01 15:55:06  [INFO    ]  DataTransformer  —    CVE           346,827    346,827          0        0  346,827
+2026-05-01 15:55:06  [INFO    ]  DataTransformer  —    KEV           141,136    141,136          0        0  141,136
+2026-05-01 15:55:06  [INFO    ]  DataTransformer  —    Breach         49,933     49,933          0        3   49,930
+2026-05-01 15:55:06  [INFO    ]  DataTransformer  —  =============================================
+2026-05-01 15:55:06  [INFO    ]  DataTransformer  —  DataTransformer complete
+
+Transformer output:
+CVE records : 346,827
+KEV records: 141,136
+Breach records: 49,930
+
+Step 2: Loading into PostgreSQL...
+2026-05-01 15:55:06  [INFO    ]  PostgresLoader  -  PostgresLoader starting...
+2026-05-01 15:55:06  [INFO    ]  PostgresConnection  -  Connecting to PostgreSQL: host=localhost db=cybersecurity_db
+2026-05-01 15:55:06  [INFO    ]  PostgresConnection  -  ############ PostgreSQL connected OK
+2026-05-01 15:55:06  [INFO    ]  SchemaManager  -  All required tables exist....
+2026-05-01 15:55:06  [INFO    ]  Writer.vulnerabilities  -  Writing 346,827 records to 'vulnerabilities'
+2026-05-01 15:55:52  [INFO    ]  Writer.vulnerabilities  -  'vulnerabilities' - wrote 346,827 / 346,827 records
+2026-05-01 15:55:52  [INFO    ]  Writer.exploited_vulnerabilities  -  Writing 141,136 records to 'exploited_vulnerabilities'
+2026-05-01 15:55:52  [ERROR   ]  Writer.exploited_vulnerabilities  -  Batch insert failed on 'exploited_vulnerabilities' at offset 0: date/time field value out of range: "2026-02-29"
+LINE 555: ...and Manager Authentication Bypass Vulnerability', '2026-02-2...
+                                                               ^
+
+2026-05-01 15:56:10  [INFO    ]  Writer.exploited_vulnerabilities  -  'exploited_vulnerabilities' - wrote 140,636 / 141,136 records
+2026-05-01 15:56:10  [INFO    ]  Writer.breaches  -  Truncating breaches table before reload....
+2026-05-01 15:56:10  [INFO    ]  Writer.breaches  -  Writing 49,930 records to 'breaches'
+2026-05-01 15:56:15  [INFO    ]  Writer.breaches  -  'breaches' - wrote 49,930 / 49,930 records
+2026-05-01 15:56:15  [INFO    ]  IndustrySummaryWriter  -  #### Rebuilding industry_summary table....
+2026-05-01 15:56:15  [INFO    ]  IndustrySummaryWriter  -  industry_summary rebuilt OK ....
+2026-05-01 15:56:15  [INFO    ]  PostgresLoader  -  ========================================
+2026-05-01 15:56:15  [INFO    ]  PostgresLoader  -    POSTGRES LOAD SUMMARY
+2026-05-01 15:56:15  [INFO    ]  PostgresLoader  -  =============================================
+2026-05-01 15:56:16  [INFO    ]  PostgresLoader  -    Table                           Attempted  Written   Failed
+2026-05-01 15:56:16  [INFO    ]  PostgresLoader  -  ----------------------------------------
+2026-05-01 15:56:16  [INFO    ]  PostgresLoader  -    vulnerabilities                   346,827  346,827        0
+2026-05-01 15:56:16  [INFO    ]  PostgresLoader  -    exploited_vulnerabilities         141,136  140,636      500
+2026-05-01 15:56:16  [INFO    ]  PostgresLoader  -    breaches                           49,930   49,930        0
+2026-05-01 15:56:16  [INFO    ]  PostgresLoader  -    industry_summary                        1        1        0
+2026-05-01 15:56:16  [INFO    ]  PostgresLoader  -  ========================================
+2026-05-01 15:56:16  [INFO    ]  PostgresLoader  -  PostgresLoader finished - all OK
+
+--- Final row counts ---
+2026-05-01 15:56:16  [INFO    ]  PostgresConnection  -  Connecting to PostgreSQL: host=localhost db=cybersecurity_db
+2026-05-01 15:56:16  [INFO    ]  PostgresConnection  -  ############ PostgreSQL connected OK
+----------------------------------------
+  vulnerabilities                    346,827 rows  [OK]
+  exploited_vulnerabilities          140,636 rows  [OK]
+  breaches                            49,930 rows  [OK]
+  industry_summary                         8 rows  [OK]
