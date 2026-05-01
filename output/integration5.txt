@@ -98,3 +98,663 @@ LINE 555: ...and Manager Authentication Bypass Vulnerability', '2026-02-2...
   exploited_vulnerabilities          140,636 rows  [OK]
   breaches                            49,930 rows  [OK]
   industry_summary                         8 rows  [OK]
+----------------------------------------
+
+
+6. Verify postgre 
+psql -h localhost -U postgres -d postgres
+
+postgres=# \l
+                                                                List of databases
+       Name       |  Owner   | Encoding | Locale Provider |      Collate       |       Ctype        | Locale | ICU Rules |   Access privileges
+------------------+----------+----------+-----------------+--------------------+--------------------+--------+-----------+-----------------------
+ cybersecurity_db | postgres | UTF8     | libc            | English_India.1252 | English_India.1252 |        |           |
+ 
+ 
+postgres=# \c cybersecurity_db
+psql (17.2, server 18.3)
+WARNING: psql major version 17, server major version 18.
+         Some psql features might not work.
+You are now connected to database "cybersecurity_db" as user "postgres".
+cybersecurity_db=# \dt
+                   List of relations
+ Schema |           Name            | Type  |  Owner
+--------+---------------------------+-------+----------
+ public | breaches                  | table | postgres
+ public | exploited_vulnerabilities | table | postgres
+ public | industry_summary          | table | postgres
+ public | vulnerabilities           | table | postgres
+(4 rows)
+
+cybersecurity_db=# select * from exploited_vulnerabilities;
+ id | cve_id | vendor | product | vulnerability_name | exploitation_date | required_action | created_at
+----+--------+--------+---------+--------------------+-------------------+-----------------+------------
+(0 rows)
+
+cybersecurity_db=# select * from breaches;
+ id | organisation | industry | breach_type | breach_date | records_exposed | state | created_at
+----+--------------+----------+-------------+-------------+-----------------+-------+------------
+(0 rows)
+
+cybersecurity_db=# select count(*) from vulnerabilities;
+ count
+--------
+ 346827
+(1 row)
+
+cybersecurity_db=# select count(*) from industry_summary;
+ count
+-------
+     8
+(1 row)
+
+
+7. Ran partially. Need to modify joins
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python analysis\sql_analysis.py
+2026-05-01 16:10:13  [INFO    ]  SqlAnalysisRunner  -  SqlAnalysisRunner starting....
+2026-05-01 16:10:13  [INFO    ]  DbConnection  -  #### DB connected for analysis queries
+2026-05-01 16:10:13  [INFO    ]  QueryRunner  -  #### Running query: RQ1: Industry breach trends
+D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\analysis\sql_analysis.py:125: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(sql, self._conn)
+2026-05-01 16:10:14  [INFO    ]  QueryRunner  -  #### 9 rows returned
+2026-05-01 16:10:14  [INFO    ]  CsvExporter  -  Saved -> analysis/output\rq1_industry_breach_trends.csv  (9 rows)
+2026-05-01 16:10:14  [INFO    ]  QueryRunner  -  #### Running query: RQ2: Breach lag after CVE disclosure
+D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\analysis\sql_analysis.py:125: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(sql, self._conn)
+2026-05-01 16:10:14  [INFO    ]  QueryRunner  -  #### 0 rows returned
+2026-05-01 16:10:14  [INFO    ]  CsvExporter  -  Saved -> analysis/output\rq2_breach_lag_after_cve.csv  (0 rows)
+2026-05-01 16:10:14  [INFO    ]  QueryRunner  -  #### Running query: RQ3: Severity vs breach rate
+D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\analysis\sql_analysis.py:125: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(sql, self._conn)
+  
+  
+7.1
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python analysis\sql_analysis.py
+2026-05-01 16:40:01  [INFO    ]  SqlAnalysisRunner  -  SqlAnalysisRunner starting....
+2026-05-01 16:40:02  [INFO    ]  DbConnection  -  #### DB connected for analysis queries
+2026-05-01 16:40:02  [INFO    ]  QueryRunner  -  #### Running query: RQ1: Industry breach trends
+D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\analysis\sql_analysis.py:125: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(sql, self._conn)
+2026-05-01 16:40:02  [INFO    ]  QueryRunner  -  #### 9 rows returned
+2026-05-01 16:40:02  [INFO    ]  CsvExporter  -  Saved -> analysis/output\rq1_industry_breach_trends.csv  (9 rows)
+2026-05-01 16:40:02  [INFO    ]  QueryRunner  -  #### Running query: RQ2: Breach lag after CVE disclosure
+D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\analysis\sql_analysis.py:125: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(sql, self._conn)
+2026-05-01 16:40:02  [INFO    ]  QueryRunner  -  #### 0 rows returned
+2026-05-01 16:40:02  [INFO    ]  CsvExporter  -  Saved -> analysis/output\rq2_breach_lag_after_cve.csv  (0 rows)
+2026-05-01 16:40:02  [INFO    ]  QueryRunner  -  #### Running query: RQ3: Severity vs breach rate
+D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\analysis\sql_analysis.py:125: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(sql, self._conn)
+2026-05-01 16:40:02  [ERROR   ]  QueryRunner  -  Query failed [RQ3: Severity vs breach rate], exception: column "severity_band" does not exist
+LINE 18:                         CASE severity_band
+                                      ^
+
+2026-05-01 16:40:02  [INFO    ]  QueryRunner  -  #### Running query: RQ4: High risk vendors
+2026-05-01 16:40:02  [ERROR   ]  QueryRunner  -  Query failed [RQ4: High risk vendors], exception: current transaction is aborted, commands ignored until end of transaction block
+
+2026-05-01 16:40:02  [INFO    ]  QueryRunner  -  #### Running query: RQ5: Time to exploit gap
+2026-05-01 16:40:02  [ERROR   ]  QueryRunner  -  Query failed [RQ5: Time to exploit gap], exception: current transaction is aborted, commands ignored until end of transaction block
+
+2026-05-01 16:40:02  [INFO    ]  QueryRunner  -  #### Running query: CVE volume by month
+2026-05-01 16:40:02  [ERROR   ]  QueryRunner  -  Query failed [CVE volume by month], exception: current transaction is aborted, commands ignored until end of transaction block
+
+2026-05-01 16:40:02  [INFO    ]  QueryRunner  -  #### Running query: Top industries by records exposed
+2026-05-01 16:40:02  [ERROR   ]  QueryRunner  -  Query failed [Top industries by records exposed], exception: current transaction is aborted, commands ignored until end of transaction block
+
+2026-05-01 16:40:02  [INFO    ]  QueryRunner  -  #### Running query: RQ5 summary statistics
+2026-05-01 16:40:02  [ERROR   ]  QueryRunner  -  Query failed [RQ5 summary statistics], exception: current transaction is aborted, commands ignored until end of transaction block
+
+2026-05-01 16:40:02  [INFO    ]  SqlAnalysisRunner  -  ========================================
+2026-05-01 16:40:02  [INFO    ]  SqlAnalysisRunner  -   SQL ANALYSIS RUN REPORT
+2026-05-01 16:40:02  [INFO    ]  SqlAnalysisRunner  -  ==========================================
+2026-05-01 16:40:02  [INFO    ]  SqlAnalysisRunner  -    Query                               RQ         Rows  Status
+2026-05-01 16:40:02  [INFO    ]  SqlAnalysisRunner  -  ------------------------------------------
+2026-05-01 16:40:02  [INFO    ]  SqlAnalysisRunner  -  RQ1: Industry breach trends         RQ1           9  OK
+2026-05-01 16:40:02  [INFO    ]  SqlAnalysisRunner  -  RQ2: Breach lag after CVE disclosure RQ2           0  OK
+2026-05-01 16:40:02  [INFO    ]  SqlAnalysisRunner  -  RQ3: Severity vs breach rate        RQ3           -  FAILED
+2026-05-01 16:40:02  [INFO    ]  SqlAnalysisRunner  -  RQ4: High risk vendors              RQ4           -  FAILED
+2026-05-01 16:40:02  [INFO    ]  SqlAnalysisRunner  -  RQ5: Time to exploit gap            RQ5           -  FAILED
+2026-05-01 16:40:02  [INFO    ]  SqlAnalysisRunner  -  CVE volume by month                 EXTRA         -  FAILED
+2026-05-01 16:40:02  [INFO    ]  SqlAnalysisRunner  -  Top industries by records exposed   EXTRA         -  FAILED
+2026-05-01 16:40:02  [INFO    ]  SqlAnalysisRunner  -  RQ5 summary statistics              EXTRA         -  FAILED
+2026-05-01 16:40:02  [INFO    ]  SqlAnalysisRunner  -  ------------------------------------------
+2026-05-01 16:40:02  [INFO    ]  SqlAnalysisRunner  -  2 passed   6 failed
+2026-05-01 16:40:02  [INFO    ]  SqlAnalysisRunner  -  ==========================================
+2026-05-01 16:40:02  [INFO    ]  SqlAnalysisRunner  -  Analysis complete: CSVs saved to 'analysis/output/' (some failures)
+
+
+
+7.2 Only one fail, rest success:
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python analysis\sql_analysis.py
+2026-05-01 16:44:29  [INFO    ]  SqlAnalysisRunner  -  SqlAnalysisRunner starting....
+2026-05-01 16:44:29  [INFO    ]  DbConnection  -  #### DB connected for analysis queries
+2026-05-01 16:44:29  [INFO    ]  QueryRunner  -  #### Running query: RQ1: Industry breach trends
+2026-05-01 16:44:29  [INFO    ]  QueryRunner  -  #### 9 rows returned
+2026-05-01 16:44:29  [INFO    ]  CsvExporter  -  Saved -> analysis/output\rq1_industry_breach_trends.csv  (9 rows)
+2026-05-01 16:44:29  [INFO    ]  QueryRunner  -  #### Running query: RQ2: Breach lag after CVE disclosure
+2026-05-01 16:44:29  [INFO    ]  QueryRunner  -  #### 0 rows returned
+2026-05-01 16:44:29  [INFO    ]  CsvExporter  -  Saved -> analysis/output\rq2_breach_lag_after_cve.csv  (0 rows)
+2026-05-01 16:44:29  [INFO    ]  QueryRunner  -  #### Running query: RQ3: Severity vs breach rate
+2026-05-01 16:44:29  [ERROR   ]  QueryRunner  -  Query failed [RQ3: Severity vs breach rate], exception: column "v.severity" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 22:                             WHEN v.severity >= 9.0 THEN 1
+                                          ^
+
+2026-05-01 16:44:29  [INFO    ]  QueryRunner  -  #### Running query: RQ4: High risk vendors
+2026-05-01 16:44:29  [INFO    ]  QueryRunner  -  #### 0 rows returned
+2026-05-01 16:44:29  [INFO    ]  CsvExporter  -  Saved -> analysis/output\rq4_high_risk_vendors.csv  (0 rows)
+2026-05-01 16:44:29  [INFO    ]  QueryRunner  -  #### Running query: RQ5: Time to exploit gap
+2026-05-01 16:44:30  [INFO    ]  QueryRunner  -  #### 1,033 rows returned
+2026-05-01 16:44:30  [INFO    ]  CsvExporter  -  Saved -> analysis/output\rq5_time_to_exploit.csv  (1,033 rows)
+2026-05-01 16:44:30  [INFO    ]  QueryRunner  -  #### Running query: CVE volume by month
+2026-05-01 16:44:30  [INFO    ]  QueryRunner  -  #### 136 rows returned
+2026-05-01 16:44:30  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_cve_monthly_volume.csv  (136 rows)
+2026-05-01 16:44:30  [INFO    ]  QueryRunner  -  #### Running query: Top industries by records exposed
+2026-05-01 16:44:30  [INFO    ]  QueryRunner  -  #### 8 rows returned
+2026-05-01 16:44:30  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_top_industries_records.csv  (8 rows)
+2026-05-01 16:44:30  [INFO    ]  QueryRunner  -  #### Running query: RQ5 summary statistics
+2026-05-01 16:44:30  [INFO    ]  QueryRunner  -  #### 1 rows returned
+2026-05-01 16:44:30  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_rq5_exploit_stats.csv  (1 rows)
+2026-05-01 16:44:30  [INFO    ]  SqlAnalysisRunner  -  ========================================
+2026-05-01 16:44:30  [INFO    ]  SqlAnalysisRunner  -   SQL ANALYSIS RUN REPORT
+2026-05-01 16:44:30  [INFO    ]  SqlAnalysisRunner  -  ==========================================
+2026-05-01 16:44:30  [INFO    ]  SqlAnalysisRunner  -    Query                               RQ         Rows  Status
+2026-05-01 16:44:30  [INFO    ]  SqlAnalysisRunner  -  ------------------------------------------
+2026-05-01 16:44:30  [INFO    ]  SqlAnalysisRunner  -  RQ1: Industry breach trends         RQ1           9  OK
+2026-05-01 16:44:30  [INFO    ]  SqlAnalysisRunner  -  RQ2: Breach lag after CVE disclosure RQ2           0  OK
+2026-05-01 16:44:30  [INFO    ]  SqlAnalysisRunner  -  RQ3: Severity vs breach rate        RQ3           -  FAILED
+2026-05-01 16:44:30  [INFO    ]  SqlAnalysisRunner  -  RQ4: High risk vendors              RQ4           0  OK
+2026-05-01 16:44:30  [INFO    ]  SqlAnalysisRunner  -  RQ5: Time to exploit gap            RQ5       1,033  OK
+2026-05-01 16:44:30  [INFO    ]  SqlAnalysisRunner  -  CVE volume by month                 EXTRA       136  OK
+2026-05-01 16:44:30  [INFO    ]  SqlAnalysisRunner  -  Top industries by records exposed   EXTRA         8  OK
+2026-05-01 16:44:30  [INFO    ]  SqlAnalysisRunner  -  RQ5 summary statistics              EXTRA         1  OK
+2026-05-01 16:44:30  [INFO    ]  SqlAnalysisRunner  -  ------------------------------------------
+2026-05-01 16:44:30  [INFO    ]  SqlAnalysisRunner  -  7 passed   1 failed
+2026-05-01 16:44:30  [INFO    ]  SqlAnalysisRunner  -  ==========================================
+2026-05-01 16:44:30  [INFO    ]  SqlAnalysisRunner  -  Analysis complete: CSVs saved to 'analysis/output/' (some failures)
+
+
+7.3
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python analysis\sql_analysis.py
+2026-05-01 16:47:17  [INFO    ]  SqlAnalysisRunner  -  SqlAnalysisRunner starting....
+2026-05-01 16:47:18  [INFO    ]  DbConnection  -  #### DB connected for analysis queries
+2026-05-01 16:47:18  [INFO    ]  QueryRunner  -  #### Running query: RQ1: Industry breach trends
+2026-05-01 16:47:18  [INFO    ]  QueryRunner  -  #### 9 rows returned
+2026-05-01 16:47:18  [INFO    ]  CsvExporter  -  Saved -> analysis/output\rq1_industry_breach_trends.csv  (9 rows)
+2026-05-01 16:47:18  [INFO    ]  QueryRunner  -  #### Running query: RQ2: Breach lag after CVE disclosure
+2026-05-01 16:47:18  [INFO    ]  QueryRunner  -  #### 0 rows returned
+2026-05-01 16:47:18  [INFO    ]  CsvExporter  -  Saved -> analysis/output\rq2_breach_lag_after_cve.csv  (0 rows)
+2026-05-01 16:47:18  [INFO    ]  QueryRunner  -  #### Running query: RQ3: Severity vs breach rate
+2026-05-01 16:47:18  [ERROR   ]  QueryRunner  -  Query failed [RQ3: Severity vs breach rate], exception: column "v.severity" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 22:                             WHEN v.severity >= 9.0 THEN 1
+                                          ^
+
+2026-05-01 16:47:18  [INFO    ]  QueryRunner  -  #### Running query: RQ4: High risk vendors
+2026-05-01 16:47:18  [INFO    ]  QueryRunner  -  #### 0 rows returned
+2026-05-01 16:47:18  [INFO    ]  CsvExporter  -  Saved -> analysis/output\rq4_high_risk_vendors.csv  (0 rows)
+2026-05-01 16:47:18  [INFO    ]  QueryRunner  -  #### Running query: RQ5: Time to exploit gap
+2026-05-01 16:47:18  [INFO    ]  QueryRunner  -  #### 1,033 rows returned
+2026-05-01 16:47:18  [INFO    ]  CsvExporter  -  Saved -> analysis/output\rq5_time_to_exploit.csv  (1,033 rows)
+2026-05-01 16:47:18  [INFO    ]  QueryRunner  -  #### Running query: CVE volume by month
+2026-05-01 16:47:18  [INFO    ]  QueryRunner  -  #### 136 rows returned
+2026-05-01 16:47:18  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_cve_monthly_volume.csv  (136 rows)
+2026-05-01 16:47:18  [INFO    ]  QueryRunner  -  #### Running query: Top industries by records exposed
+2026-05-01 16:47:18  [INFO    ]  QueryRunner  -  #### 8 rows returned
+2026-05-01 16:47:18  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_top_industries_records.csv  (8 rows)
+2026-05-01 16:47:18  [INFO    ]  QueryRunner  -  #### Running query: RQ5 summary statistics
+2026-05-01 16:47:18  [INFO    ]  QueryRunner  -  #### 1 rows returned
+2026-05-01 16:47:18  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_rq5_exploit_stats.csv  (1 rows)
+2026-05-01 16:47:18  [INFO    ]  SqlAnalysisRunner  -  ========================================
+2026-05-01 16:47:18  [INFO    ]  SqlAnalysisRunner  -   SQL ANALYSIS RUN REPORT
+2026-05-01 16:47:18  [INFO    ]  SqlAnalysisRunner  -  ==========================================
+2026-05-01 16:47:18  [INFO    ]  SqlAnalysisRunner  -    Query                               RQ         Rows  Status
+2026-05-01 16:47:18  [INFO    ]  SqlAnalysisRunner  -  ------------------------------------------
+2026-05-01 16:47:18  [INFO    ]  SqlAnalysisRunner  -  RQ1: Industry breach trends         RQ1           9  OK
+2026-05-01 16:47:18  [INFO    ]  SqlAnalysisRunner  -  RQ2: Breach lag after CVE disclosure RQ2           0  OK
+2026-05-01 16:47:18  [INFO    ]  SqlAnalysisRunner  -  RQ3: Severity vs breach rate        RQ3           -  FAILED
+2026-05-01 16:47:18  [INFO    ]  SqlAnalysisRunner  -  RQ4: High risk vendors              RQ4           0  OK
+2026-05-01 16:47:18  [INFO    ]  SqlAnalysisRunner  -  RQ5: Time to exploit gap            RQ5       1,033  OK
+2026-05-01 16:47:18  [INFO    ]  SqlAnalysisRunner  -  CVE volume by month                 EXTRA       136  OK
+2026-05-01 16:47:18  [INFO    ]  SqlAnalysisRunner  -  Top industries by records exposed   EXTRA         8  OK
+2026-05-01 16:47:18  [INFO    ]  SqlAnalysisRunner  -  RQ5 summary statistics              EXTRA         1  OK
+2026-05-01 16:47:18  [INFO    ]  SqlAnalysisRunner  -  ------------------------------------------
+2026-05-01 16:47:18  [INFO    ]  SqlAnalysisRunner  -  7 passed   1 failed
+2026-05-01 16:47:18  [INFO    ]  SqlAnalysisRunner  -  ==========================================
+2026-05-01 16:47:18  [INFO    ]  SqlAnalysisRunner  -  Analysis complete: CSVs saved to 'analysis/output/' (some failures)
+
+
+7.4 Success (Eliminated RQ4). Run SQL Analysis:
+
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python analysis\sql_analysis.py
+2026-05-01 16:49:49  [INFO    ]  SqlAnalysisRunner  -  SqlAnalysisRunner starting....
+2026-05-01 16:49:49  [INFO    ]  DbConnection  -  #### DB connected for analysis queries
+2026-05-01 16:49:49  [INFO    ]  QueryRunner  -  #### Running query: RQ1: Industry breach trends
+2026-05-01 16:49:49  [INFO    ]  QueryRunner  -  #### 9 rows returned
+2026-05-01 16:49:49  [INFO    ]  CsvExporter  -  Saved -> analysis/output\rq1_industry_breach_trends.csv  (9 rows)
+2026-05-01 16:49:49  [INFO    ]  QueryRunner  -  #### Running query: RQ2: Breach lag after CVE disclosure
+2026-05-01 16:49:49  [INFO    ]  QueryRunner  -  #### 0 rows returned
+2026-05-01 16:49:49  [INFO    ]  CsvExporter  -  Saved -> analysis/output\rq2_breach_lag_after_cve.csv  (0 rows)
+2026-05-01 16:49:49  [INFO    ]  QueryRunner  -  #### Running query: RQ3: Severity vs breach rate
+2026-05-01 16:49:49  [INFO    ]  QueryRunner  -  #### 0 rows returned
+2026-05-01 16:49:49  [INFO    ]  CsvExporter  -  Saved -> analysis/output\rq3_severity_vs_breach_rate.csv  (0 rows)
+2026-05-01 16:49:49  [INFO    ]  QueryRunner  -  #### Running query: RQ5: Time to exploit gap
+2026-05-01 16:49:49  [INFO    ]  QueryRunner  -  #### 1,033 rows returned
+2026-05-01 16:49:49  [INFO    ]  CsvExporter  -  Saved -> analysis/output\rq5_time_to_exploit.csv  (1,033 rows)
+2026-05-01 16:49:49  [INFO    ]  QueryRunner  -  #### Running query: CVE volume by month
+2026-05-01 16:49:50  [INFO    ]  QueryRunner  -  #### 136 rows returned
+2026-05-01 16:49:50  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_cve_monthly_volume.csv  (136 rows)
+2026-05-01 16:49:50  [INFO    ]  QueryRunner  -  #### Running query: Top industries by records exposed
+2026-05-01 16:49:50  [INFO    ]  QueryRunner  -  #### 8 rows returned
+2026-05-01 16:49:50  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_top_industries_records.csv  (8 rows)
+2026-05-01 16:49:50  [INFO    ]  QueryRunner  -  #### Running query: RQ5 summary statistics
+2026-05-01 16:49:50  [INFO    ]  QueryRunner  -  #### 1 rows returned
+2026-05-01 16:49:50  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_rq5_exploit_stats.csv  (1 rows)
+2026-05-01 16:49:50  [INFO    ]  SqlAnalysisRunner  -  ========================================
+2026-05-01 16:49:50  [INFO    ]  SqlAnalysisRunner  -   SQL ANALYSIS RUN REPORT
+2026-05-01 16:49:50  [INFO    ]  SqlAnalysisRunner  -  ==========================================
+2026-05-01 16:49:50  [INFO    ]  SqlAnalysisRunner  -    Query                               RQ         Rows  Status
+2026-05-01 16:49:50  [INFO    ]  SqlAnalysisRunner  -  ------------------------------------------
+2026-05-01 16:49:50  [INFO    ]  SqlAnalysisRunner  -  RQ1: Industry breach trends         RQ1           9  OK
+2026-05-01 16:49:50  [INFO    ]  SqlAnalysisRunner  -  RQ2: Breach lag after CVE disclosure RQ2           0  OK
+2026-05-01 16:49:50  [INFO    ]  SqlAnalysisRunner  -  RQ3: Severity vs breach rate        RQ3           0  OK
+2026-05-01 16:49:50  [INFO    ]  SqlAnalysisRunner  -  RQ5: Time to exploit gap            RQ5       1,033  OK
+2026-05-01 16:49:50  [INFO    ]  SqlAnalysisRunner  -  CVE volume by month                 EXTRA       136  OK
+2026-05-01 16:49:50  [INFO    ]  SqlAnalysisRunner  -  Top industries by records exposed   EXTRA         8  OK
+2026-05-01 16:49:50  [INFO    ]  SqlAnalysisRunner  -  RQ5 summary statistics              EXTRA         1  OK
+2026-05-01 16:49:50  [INFO    ]  SqlAnalysisRunner  -  ------------------------------------------
+2026-05-01 16:49:50  [INFO    ]  SqlAnalysisRunner  -  7 passed   0 failed
+2026-05-01 16:49:50  [INFO    ]  SqlAnalysisRunner  -  ==========================================
+2026-05-01 16:49:50  [INFO    ]  SqlAnalysisRunner  -  Analysis complete: CSVs saved to 'analysis/output/' (all OK)
+
+
+
+
+8. Run CVE-KEV Merge
+
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python integration\cve_kev_merge.py
+2026-05-01 16:51:33  [INFO    ]  CveKevMerger  -  CveKevMerger starting...
+2026-05-01 16:51:33  [INFO    ]  PostgresReader  -  Reading from PostgreSQL: vulnerabilities
+D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\integration\cve_kev_merge.py:58: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(sql, conn)
+2026-05-01 16:51:34  [INFO    ]  PostgresReader  -    Got 346,827 rows
+2026-05-01 16:51:34  [INFO    ]  PostgresReader  -  Reading from PostgreSQL: exploited_vulnerabilities
+2026-05-01 16:51:34  [INFO    ]  PostgresReader  -    Got 140,636 rows
+2026-05-01 16:51:34  [INFO    ]  PostgresReader  -  Reading from PostgreSQL: breaches
+2026-05-01 16:51:34  [INFO    ]  PostgresReader  -    Got 49,930 rows
+2026-05-01 16:51:34  [INFO    ]  CveKevJoiner  -  Joining CVE (346,827 rows) with KEV (140,636 rows) on cve_id...
+2026-05-01 16:51:34  [INFO    ]  CveKevJoiner  -  Merge complete:
+2026-05-01 16:51:34  [INFO    ]  CveKevJoiner  -  Total CVEs : 346,827
+2026-05-01 16:51:34  [INFO    ]  CveKevJoiner  -  Matched (exploited): 1,083  (0.3%)
+2026-05-01 16:51:34  [INFO    ]  CveKevJoiner  -  Unmatched: 345,744
+2026-05-01 16:51:34  [INFO    ]  TimeToExploitCalculator  -  50 records with negative time_to_exploit (exploitation before NVD publication - likely zero-days or embargoed CVEs)
+2026-05-01 16:51:34  [INFO    ]  TimeToExploitCalculator  -  time_to_exploit calculated for 346,827 records
+2026-05-01 16:51:34  [INFO    ]  TimeToExploitCalculator  -
+  Time-to-exploit window distribution:
+2026-05-01 16:51:34  [INFO    ]  TimeToExploitCalculator  -      Over 1 year (very slow)                   n=  640  avg=1760 days
+2026-05-01 16:51:34  [INFO    ]  TimeToExploitCalculator  -      91-365 days (slow)                        n=  177  avg=210 days
+2026-05-01 16:51:34  [INFO    ]  TimeToExploitCalculator  -      0-7 days (immediate)                      n=  108  avg=2 days
+2026-05-01 16:51:34  [INFO    ]  TimeToExploitCalculator  -      31-90 days (moderate)                     n=   59  avg=59 days
+2026-05-01 16:51:34  [INFO    ]  TimeToExploitCalculator  -      Negative (zero-day / embargoed)           n=   50  avg=-36 days
+2026-05-01 16:51:34  [INFO    ]  TimeToExploitCalculator  -      8-30 days (fast)                          n=   49  avg=17 days
+2026-05-01 16:51:34  [INFO    ]  TimeToExploitCalculator  -      Unknown (missing dates)                   n=    0  avg=nan days
+2026-05-01 16:51:34  [INFO    ]  CveKevMerger  -
+  Time-to-exploit summary:
+2026-05-01 16:51:34  [INFO    ]  CveKevMerger  -  count                : 1033
+2026-05-01 16:51:34  [INFO    ]  CveKevMerger  -  mean_days            : 1130.8
+2026-05-01 16:51:34  [INFO    ]  CveKevMerger  -  median_days          : 674.0
+2026-05-01 16:51:34  [INFO    ]  CveKevMerger  -  min_days             : 0
+2026-05-01 16:51:34  [INFO    ]  CveKevMerger  -  max_days             : 7191
+2026-05-01 16:51:34  [INFO    ]  CveKevMerger  -  pct_within_7         : 10.5
+2026-05-01 16:51:34  [INFO    ]  CveKevMerger  -  pct_within_30        : 15.2
+2026-05-01 16:51:34  [INFO    ]  CveKevMerger  -  pct_within_90        : 20.9
+2026-05-01 16:51:38  [INFO    ]  MergeOutputWriter  -  Saved 346,827 rows -> integration/output\merged_cve_kev.csv
+2026-05-01 16:51:38  [INFO    ]  MergeOutputWriter  -  Saved 1,083 rows -> integration/output\exploited_cves_enriched.csv
+2026-05-01 16:51:38  [INFO    ]  MergeOutputWriter  -  Saved 1,083 rows -> integration/output\time_to_exploit_analysis.csv
+2026-05-01 16:51:38  [INFO    ]  CveKevMerger  -  CveKevMerger complete
+
+Merge done: 346,827 total CVEs in merged table
+Exploited : 1,083
+CSVs saved to integration/output/
+
+
+9. Load Neo4j Graph
+
+9.1 Load Neo4j Graph
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python graph\neo4j_loader.py
+2026-05-01 16:53:35  [INFO    ]  Neo4jLoader  -  Neo4jLoader starting full graph load.
+2026-05-01 16:53:36  [INFO    ]  GraphDataLoader  -  Loaded merged_cve_kev: 346,827 rows
+D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\graph\neo4j_loader.py:123: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(
+2026-05-01 16:53:37  [INFO    ]  GraphDataLoader  -  Loaded breaches from PostgreSQL: 49,930 rows
+2026-05-01 16:53:37  [INFO    ]  Neo4jConnection  -  Connecting to Neo4j at bolt://localhost:7687
+Traceback (most recent call last):
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 512, in _connect_secure
+    s.connect(resolved_address)
+ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 329, in connect
+    s = cls._connect_secure(
+        ^^^^^^^^^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 523, in _connect_secure
+    raise ServiceUnavailable(
+neo4j.exceptions.ServiceUnavailable: Failed to establish connection to ResolvedIPv6Address(('::1', 7687, 0, 0)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\graph\neo4j_loader.py", line 58, in connect
+    self._driver.verify_connectivity()
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\.venv\Lib\site-packages\neo4j\_sync\driver.py", line 1060, in verify_connectivity
+    self._get_server_info(session_config)
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\.venv\Lib\site-packages\neo4j\_sync\driver.py", line 1289, in _get_server_info
+    return session._get_server_info()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\.venv\Lib\site-packages\neo4j\_sync\work\session.py", line 173, in _get_server_info
+    self._connect(
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\.venv\Lib\site-packages\neo4j\_sync\work\session.py", line 126, in _connect
+    super()._connect(
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\.venv\Lib\site-packages\neo4j\_sync\work\workspace.py", line 181, in _connect
+    self._connection = self._pool.acquire(**acquire_kwargs_)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 678, in acquire
+    return self._acquire(
+           ^^^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 418, in _acquire
+    return connection_creator()
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 231, in connection_creator
+    connection = self.opener(
+                 ^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 638, in opener
+    return Bolt.open(
+           ^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\.venv\Lib\site-packages\neo4j\_sync\io\_bolt.py", line 368, in open
+    s, protocol_version = BoltSocket.connect(
+                          ^^^^^^^^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 380, in connect
+    raise ServiceUnavailable(
+neo4j.exceptions.ServiceUnavailable: Couldn't connect to localhost:7687 (resolved to ('[::1]:7687', '127.0.0.1:7687')):
+Failed to establish connection to ResolvedIPv6Address(('::1', 7687, 0, 0)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\graph\neo4j_loader.py", line 630, in <module>
+    success = loader.run()
+              ^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\graph\neo4j_loader.py", line 604, in run
+    with Neo4jConnection() as neo4j:
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\graph\neo4j_loader.py", line 83, in __enter__
+    return self.connect()
+           ^^^^^^^^^^^^^^
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\graph\neo4j_loader.py", line 61, in connect
+    raise ConnectionError(
+ConnectionError: Neo4j not reachable at bolt://localhost:7687. Is Neo4j Desktop running?
+
+
+#### 9.2 Load Neo4j Graph
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python graph\neo4j_loader.py
+2026-05-01 17:05:02  [INFO    ]  Neo4jLoader  -  Neo4jLoader starting full graph load.
+2026-05-01 17:05:03  [INFO    ]  GraphDataLoader  -  Loaded merged_cve_kev: 346,827 rows
+D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\graph\neo4j_loader.py:123: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(
+2026-05-01 17:05:04  [INFO    ]  GraphDataLoader  -  Loaded breaches from PostgreSQL: 49,930 rows
+2026-05-01 17:05:04  [INFO    ]  Neo4jConnection  -  Connecting to Neo4j at bolt://localhost:7687
+2026-05-01 17:05:06  [INFO    ]  Neo4jConnection  -  Neo4j connected OK
+2026-05-01 17:05:06  [INFO    ]  ConstraintManager  -  Applying Neo4j uniqueness constraints...
+2026-05-01 17:05:08  [INFO    ]  ConstraintManager  -  Constraints applied
+2026-05-01 17:05:54  [INFO    ]  NodeLoader  -  Vulnerability nodes loaded: 346,827
+
+
+10. Run Graph Insights
+
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python graph\graph_insights.py
+2026-05-01 17:14:25  [INFO    ]  GraphInsightsRunner  -  GraphInsightsRunner starting...
+2026-05-01 17:14:27  [INFO    ]  Neo4jSessionRunner  -  Neo4j connected at bolt://localhost:7687
+2026-05-01 17:14:27  [INFO    ]  GraphStatsCollector  -
+  Graph statistics:
+2026-05-01 17:14:27  [INFO    ]  GraphStatsCollector  -  vulnerability_nodes        346,827
+2026-05-01 17:14:27  [INFO    ]  GraphStatsCollector  -  software_nodes                 458
+2026-05-01 17:14:27  [INFO    ]  GraphStatsCollector  -  organization_nodes          49,930
+2026-05-01 17:14:27  [INFO    ]  GraphStatsCollector  -  industry_nodes                   8
+2026-05-01 17:14:27  [INFO    ]  GraphStatsCollector  -  exploits_rels                1,083
+2026-05-01 17:14:27  [INFO    ]  GraphStatsCollector  -  breached_in_rels            49,930
+Received notification from DBMS server: <GqlStatusObject gql_status='01N51', status_description='warn: relationship type does not exist. The relationship type `AFFECTS` does not exist in database `neo4j`. Verify that the spelling is correct.', position=<SummaryInputPosition line=1, column=13, offset=12>, raw_classification='UNRECOGNIZED', classification=<NotificationClassification.UNRECOGNIZED: 'UNRECOGNIZED'>, raw_severity='WARNING', severity=<NotificationSeverity.WARNING: 'WARNING'>, diagnostic_record={'_classification': 'UNRECOGNIZED', '_severity': 'WARNING', '_position': {'offset': 12, 'line': 1, 'column': 13}, 'OPERATION': '', 'OPERATION_CODE': '0', 'CURRENT_SCHEMA': '/'}> for query: 'MATCH ()-[r:AFFECTS]->()  RETURN COUNT(r) AS n'
+2026-05-01 17:14:27  [INFO    ]  GraphStatsCollector  -  affects_rels                     0
+2026-05-01 17:14:27  [INFO    ]  InsightOutputWriter  -  Saved 1 rows -> graph/output\graph_stats.csv
+Received notification from DBMS server: <GqlStatusObject gql_status='01N52', status_description='warn: property key does not exist. The property `severity` does not exist in database `neo4j`. Verify that the spelling is correct.', position=<SummaryInputPosition line=5, column=49, offset=153>, raw_classification='UNRECOGNIZED', classification=<NotificationClassification.UNRECOGNIZED: 'UNRECOGNIZED'>, raw_severity='WARNING', severity=<NotificationSeverity.WARNING: 'WARNING'>, diagnostic_record={'_classification': 'UNRECOGNIZED', '_severity': 'WARNING', '_position': {'offset': 153, 'line': 5, 'column': 49}, 'OPERATION': '', 'OPERATION_CODE': '0', 'CURRENT_SCHEMA': '/'}> for query: '\n            MATCH (v:Vulnerability)\n            OPTIONAL MATCH (v)-[e:EXPLOITS]->()\n            WITH v,\n                 COUNT(e) AS exploits_degree, v.severity AS severity, v.vendor AS vendor, v.publish_date AS publish_date, v.is_exploited AS is_exploited\n            ORDER BY exploits_degree DESC\n            LIMIT 30\n            RETURN v.cve_id AS cve_id,severity,vendor,publish_date, is_exploited, exploits_degree'
+2026-05-01 17:14:29  [INFO    ]  DegreeCentralityAnalyser  -  Vulnerability centrality: top CVE has degree 1 connections
+2026-05-01 17:14:29  [INFO    ]  InsightOutputWriter  -  Saved 30 rows -> graph/output\vulnerability_centrality.csv
+Received notification from DBMS server: <GqlStatusObject gql_status='01N51', status_description='warn: relationship type does not exist. The relationship type `AFFECTS` does not exist in database `neo4j`. Verify that the spelling is correct.', position=<SummaryInputPosition line=3, column=84, offset=115>, raw_classification='UNRECOGNIZED', classification=<NotificationClassification.UNRECOGNIZED: 'UNRECOGNIZED'>, raw_severity='WARNING', severity=<NotificationSeverity.WARNING: 'WARNING'>, diagnostic_record={'_classification': 'UNRECOGNIZED', '_severity': 'WARNING', '_position': {'offset': 115, 'line': 3, 'column': 84}, 'OPERATION': '', 'OPERATION_CODE': '0', 'CURRENT_SCHEMA': '/'}> for query: '\n            MATCH (s:Software)\n            OPTIONAL MATCH (v:Vulnerability)-[:EXPLOITS]->(s) OPTIONAL MATCH (s)-[:AFFECTS]->(o:Organization) WITH s,\n            COUNT(DISTINCT v) AS incoming_cves, COUNT(DISTINCT o) AS affected_orgs ORDER BY (incoming_cves + affected_orgs) DESC\n            LIMIT 20\n            RETURN s.vendor AS vendor, s.product AS product, incoming_cves, affected_orgs, (incoming_cves + affected_orgs) AS total_degree\n        '
+2026-05-01 17:14:29  [INFO    ]  DegreeCentralityAnalyser  -  Software centrality: top product has total degree 110
+2026-05-01 17:14:29  [INFO    ]  InsightOutputWriter  -  Saved 20 rows -> graph/output\software_centrality.csv
+2026-05-01 17:14:29  [INFO    ]  InsightOutputWriter  -  Saved 20 rows -> graph/output\organisation_centrality.csv
+2026-05-01 17:14:29  [INFO    ]  CommunityDetector  -  Running community detection (Jaccard similarity)...
+Received notification from DBMS server: <GqlStatusObject gql_status='01N51', status_description='warn: relationship type does not exist. The relationship type `AFFECTS` does not exist in database `neo4j`. Verify that the spelling is correct.', position=<SummaryInputPosition line=3, column=34, offset=98>, raw_classification='UNRECOGNIZED', classification=<NotificationClassification.UNRECOGNIZED: 'UNRECOGNIZED'>, raw_severity='WARNING', severity=<NotificationSeverity.WARNING: 'WARNING'>, diagnostic_record={'_classification': 'UNRECOGNIZED', '_severity': 'WARNING', '_position': {'offset': 98, 'line': 3, 'column': 34}, 'OPERATION': '', 'OPERATION_CODE': '0', 'CURRENT_SCHEMA': '/'}> for query: '\n            MATCH (o:Organization)-[:BREACHED_IN]->(i:Industry)\n            MATCH (s:Software)-[:AFFECTS]->(o)\n            RETURN i.name AS industry, s.vendor AS vendor\n        '
+2026-05-01 17:14:31  [INFO    ]  CommunityDetector  -  Similarity matrix computed: 8x8 industries
+2026-05-01 17:14:31  [INFO    ]  CommunityDetector  -    Top 5 most similar industry pairs (Jaccard):
+2026-05-01 17:14:31  [INFO    ]  CommunityDetector  -      Bsr                       <-> Business / Other           sim=0.000
+2026-05-01 17:14:31  [INFO    ]  CommunityDetector  -      Bsr                       <-> Education                  sim=0.000
+2026-05-01 17:14:31  [INFO    ]  CommunityDetector  -      Bsr                       <-> Financial Services         sim=0.000
+2026-05-01 17:14:31  [INFO    ]  CommunityDetector  -      Bsr                       <-> Government / Military      sim=0.000
+2026-05-01 17:14:31  [INFO    ]  CommunityDetector  -      Bsr                       <-> Healthcare                 sim=0.000
+2026-05-01 17:14:31  [INFO    ]  CommunityDetector  -  Community detection complete: 8 communities found
+2026-05-01 17:14:31  [INFO    ]  CommunityDetector  -    Community 0: ['Bsr']
+2026-05-01 17:14:31  [INFO    ]  CommunityDetector  -    Community 1: ['Business / Other']
+2026-05-01 17:14:31  [INFO    ]  CommunityDetector  -    Community 2: ['Education']
+2026-05-01 17:14:31  [INFO    ]  CommunityDetector  -    Community 3: ['Financial Services']
+2026-05-01 17:14:31  [INFO    ]  CommunityDetector  -    Community 4: ['Government / Military']
+2026-05-01 17:14:31  [INFO    ]  CommunityDetector  -    Community 5: ['Healthcare']
+2026-05-01 17:14:31  [INFO    ]  CommunityDetector  -    Community 6: ['Non-Profit']
+2026-05-01 17:14:31  [INFO    ]  CommunityDetector  -    Community 7: ['Unkn']
+2026-05-01 17:14:31  [INFO    ]  InsightOutputWriter  -  Saved 8 rows -> graph/output\industry_similarity_matrix.csv
+2026-05-01 17:14:31  [INFO    ]  InsightOutputWriter  -  Saved 8 rows -> graph/output\industry_communities.csv
+Received notification from DBMS server: <GqlStatusObject gql_status='01N51', status_description='warn: relationship type does not exist. The relationship type `AFFECTS` does not exist in database `neo4j`. Verify that the spelling is correct.', position=<SummaryInputPosition line=4, column=34, offset=148>, raw_classification='UNRECOGNIZED', classification=<NotificationClassification.UNRECOGNIZED: 'UNRECOGNIZED'>, raw_severity='WARNING', severity=<NotificationSeverity.WARNING: 'WARNING'>, diagnostic_record={'_classification': 'UNRECOGNIZED', '_severity': 'WARNING', '_position': {'offset': 148, 'line': 4, 'column': 34}, 'OPERATION': '', 'OPERATION_CODE': '0', 'CURRENT_SCHEMA': '/'}> for query: '\n            MATCH (s:Software)\n            OPTIONAL MATCH (v:Vulnerability {is_exploited: true})-[:EXPLOITS]->(s)\n            OPTIONAL MATCH (s)-[:AFFECTS]->(o:Organization) WITH s.vendor AS vendor, COUNT(DISTINCT v) AS exploited_cves, AVG(v.severity) AS avg_severity,\n            COUNT(DISTINCT o) AS affected_orgs WHERE vendor IS NOT NULL RETURN vendor, exploited_cves, avg_severity, affected_orgs\n            ORDER BY exploited_cves DESC LIMIT 20\n        '
+Received notification from DBMS server: <GqlStatusObject gql_status='01N52', status_description='warn: property key does not exist. The property `severity` does not exist in database `neo4j`. Verify that the spelling is correct.', position=<SummaryInputPosition line=4, column=129, offset=243>, raw_classification='UNRECOGNIZED', classification=<NotificationClassification.UNRECOGNIZED: 'UNRECOGNIZED'>, raw_severity='WARNING', severity=<NotificationSeverity.WARNING: 'WARNING'>, diagnostic_record={'_classification': 'UNRECOGNIZED', '_severity': 'WARNING', '_position': {'offset': 243, 'line': 4, 'column': 129}, 'OPERATION': '', 'OPERATION_CODE': '0', 'CURRENT_SCHEMA': '/'}> for query: '\n            MATCH (s:Software)\n            OPTIONAL MATCH (v:Vulnerability {is_exploited: true})-[:EXPLOITS]->(s)\n            OPTIONAL MATCH (s)-[:AFFECTS]->(o:Organization) WITH s.vendor AS vendor, COUNT(DISTINCT v) AS exploited_cves, AVG(v.severity) AS avg_severity,\n            COUNT(DISTINCT o) AS affected_orgs WHERE vendor IS NOT NULL RETURN vendor, exploited_cves, avg_severity, affected_orgs\n            ORDER BY exploited_cves DESC LIMIT 20\n        '
+2026-05-01 17:14:31  [INFO    ]  VendorRiskRanker  -
+  Top 5 vendors by composite risk score:
+2026-05-01 17:14:31  [INFO    ]  VendorRiskRanker  -      Microsoft                  score=0.500  exploited=280  avg_cvss=0.0
+2026-05-01 17:14:31  [INFO    ]  VendorRiskRanker  -      Apple                      score=0.118  exploited=73  avg_cvss=0.0
+2026-05-01 17:14:31  [INFO    ]  VendorRiskRanker  -      Cisco                      score=0.111  exploited=69  avg_cvss=0.0
+2026-05-01 17:14:31  [INFO    ]  VendorRiskRanker  -      Adobe                      score=0.107  exploited=67  avg_cvss=0.0
+2026-05-01 17:14:31  [INFO    ]  VendorRiskRanker  -      Google                     score=0.083  exploited=54  avg_cvss=0.0
+2026-05-01 17:14:31  [INFO    ]  InsightOutputWriter  -  Saved 20 rows -> graph/output\vendor_risk_scores.csv
+2026-05-01 17:14:31  [INFO    ]  GraphInsightsRunner  -  GraphInsightsRunner complete. Results saved to graph/output/
+
+Graph insights complete:
+  stats                          1 rows
+  vuln_centrality               30 rows
+  sw_centrality                 20 rows
+  org_centrality                20 rows
+  communities                    8 rows
+  vendor_risk                   20 rows
+  
+  
+  
+11. Generate Graph Report
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python graph\graph_report.py
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -  Generating graph analytics report...
+2026-05-01 17:15:34  [INFO    ]  DashboardSummaryExporter  -  Dashboard summary exported -> graph/output\dashboard_graph_summary.csv
+2026-05-01 17:15:34  [INFO    ]  GraphScaleSection  -  Graph scale: 397,223 nodes, 51,013 relationships
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -  Report written to graph/reports\graph_analytics_report.txt
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -  Total lines: 139
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    =================================================================
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -     GRAPH ANALYTICS REPORT
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Cybersecurity Incident and Vulnerability Risk Analytics
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Generated: 2026-05-01 17:15
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    =================================================================
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    4.1  Graph Scale
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    --------------------------------------------------
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    The Neo4j property graph contains 397,223 nodes across
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    four node labels and 51,013 relationships across three
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    relationship types.
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    Node counts:
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    Vulnerability nodes: 346,827
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    Software nodes :      458
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    Organization nodes :   49,930
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    Industry nodes :        8
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    TOTAL :  397,223
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    Relationship counts:
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    EXPLOITS :    1,083
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    BREACHED_IN :   49,930
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    AFFECTS :        0
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    TOTAL :   51,013
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    4.2  Degree Centrality Analysis
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    --------------------------------------------------
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Degree centrality measures how many direct connections,each node has in the graph. Higher degree indicates greater
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      connectivity and therefore greater risk or exposure.
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      The top 10 Most Connected Vulnerability Nodes:
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    CVE-2009-0557       degree=  1  severity=nan    vendor=Unknown
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    CVE-2010-2568       degree=  1  severity=nan    vendor=Unknown
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    CVE-2007-3010       degree=  1  severity=nan    vendor=Unknown
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    CVE-2009-0563       degree=  1  severity=nan    vendor=Unknown
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    CVE-2010-0232       degree=  1  severity=nan    vendor=Unknown
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    CVE-2010-1297       degree=  1  severity=nan    vendor=Unknown
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    CVE-2004-1464       degree=  1  severity=nan    vendor=Unknown
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    CVE-2006-2492       degree=  1  severity=nan    vendor=Unknown
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    CVE-2008-3431       degree=  1  severity=nan    vendor=Unknown
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    CVE-2009-1151       degree=  1  severity=nan    vendor=Unknown
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      The top 10 Most Connected Software Nodes:
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    Microsoft            / Windows               total_degree= 110
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    Apple                / Multiple Products     total_degree=  36
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    Microsoft            / Internet Explorer     total_degree=  31
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    Adobe                / Flash Player          total_degree=  29
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    Google               / Chromium V8           total_degree=  28
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    Microsoft            / Win32k                total_degree=  25
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    Microsoft            / Office                total_degree=  24
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    Microsoft            / Exchange Server       total_degree=  15
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    Cisco                / IOS and IOS XE Software  total_degree=  14
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    Adobe                / ColdFusion            total_degree=  13
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Interpretation:
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Vulnerability nodes with high EXPLOITS degree represent CVEs, that affect a wide range of software products simultaneously.
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      These are particularly dangerous in heterogeneous enterprise,environments where many different products are in use.
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Software nodes with high total degree are either widely exploited, or used by many organisations - patching these should be prioritised.
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    4.3  Community Detection - Industry Clustering
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    --------------------------------------------------
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    Method: Jaccard similarity on shared vendor exposure sets.
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Industries with similarity >= 0.30 were grouped together. This approximates the Louvain algorithm without requiring, the Neo4j Graph Data Science plugin.
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      8 communities detected across 8 industry sectors.
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Community 0  (1 sectors):
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -        - Bsr
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Community 1  (1 sectors):
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -        - Business / Other
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Community 2  (1 sectors):
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -        - Education
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Community 3  (1 sectors):
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -        - Financial Services
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Community 4  (1 sectors):
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -        - Government / Military
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Community 5  (1 sectors):
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -        - Healthcare
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Community 6  (1 sectors):
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -        - Non-Profit
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Community 7  (1 sectors):
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -        - Unkn
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Interpretation:
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Industries in the same community share vulnerability exposure, through common software vendors. A breach or patch in one sector
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      may have cascading implications for co-clustered sectors. This finding is relevant to RQ1 which asks how vulnerability
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      patterns relate to breach patterns across industry sectors.
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    4.4  Vendor Risk Ranking  (Answers RQ4)
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    --------------------------------------------------
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Composite risk score = 0.5 * normalised(exploited_cve_count)
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -                           + 0.3 * normalised(avg_cvss_severity)
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -                           + 0.2 * normalised(affected_organisation_count)
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Weights rationale:
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -        Confirmed exploitation carries most weight (0.5) because it, represents real-world active threats rather than theoretical risk.
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -        CVSS severity (0.3) captures potential damage if exploited. Organisation exposure (0.2) reflects breadth of impact.
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -     Top 10 Vendors by Composite Risk Score:
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Rank  Vendor                     Score   Exploited   Avg CVSS   Orgs
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      -----------------------------------------------------------------
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      1     Microsoft                  0.500         280       0.00      0
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      2     Apple                      0.118          73       0.00      0
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      3     Cisco                      0.111          69       0.00      0
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      4     Adobe                      0.107          67       0.00      0
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      5     Google                     0.083          54       0.00      0
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      6     Oracle                     0.044          33       0.00      0
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      7     Apache                     0.041          31       0.00      0
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      8     VMware                     0.024          22       0.00      0
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      9     Ivanti                     0.015          17       0.00      0
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      10    Citrix                     0.013          16       0.00      0
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      Finding: Microsoft has the highest composite risk score.
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      This aligns with SQL analysis (RQ4 query) confirming consistency, between relational and graph-based approaches.
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    4.5  Time-to-Exploit Insights from Graph  (Contributes to RQ5)
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    --------------------------------------------------
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      The graph model adds a network perspective to SQL, time-to-exploit analysis by examining whether high-centrality
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      vulnerabilities are exploited faster than low-centrality ones.
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      This graph-level finding complements the temporal analysis, (days to exploit) in the SQL layer by showing which structural
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      graph properties correlate with exploitation likelihood.
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    =================================================================
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -      END OF GRAPH ANALYTICS SECTION
+2026-05-01 17:15:34  [INFO    ]  GraphReportGenerator  -    =================================================================
+
+Report saved to: graph/reports\graph_analytics_report.txt
+
+
+
+12. Start the Dashboard
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python dashboard\rq_panel.py
+Traceback (most recent call last):
+  File "D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\dashboard\rq_panel.py", line 16, in <module>
+    from dashboard.filter_callbacks import ( FilterDataProvider,FilteredDataLoader,FilteredChartBuilder,FilterManager,configure_logger,)
+ModuleNotFoundError: No module named 'dashboard'
+
+
+12.1 #### Start the Dashboard (Need to solve module error. Right now running without ".py" and "-m" option)
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python -m dashboard.rq_panel.py
+D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\.venv\Scripts\python.exe: Error while finding module specification for 'dashboard.rq_panel.py' (ModuleNotFoundError: __path__ attribute not found on 'dashboard.rq_panel' while trying to find 'dashboard.rq_panel.py'). Try using 'dashboard.rq_panel' instead of 'dashboard.rq_panel.py' as the module name.
+
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python -m dashboard.rq_panel
+2026-05-01 17:21:49  [INFO    ]  RQDashboardApp  -  Loading filter options...
+2026-05-01 17:21:49  [INFO    ]  FilterDataProvider  -  Loading filter options from PostgreSQL...
+D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\dashboard\filter_callbacks.py:65: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(sql, conn)
+2026-05-01 17:21:49  [INFO    ]  FilterManager  -  All filter callbacks registered
+2026-05-01 17:21:49  [INFO    ]  RQDashboardApp  -  Dashboard ready at http://localhost:8050
+Dash is running on http://0.0.0.0:8050/
+
+ * Serving Flask app 'rq_panel'
+ * Debug mode: on
+2026-05-01 17:21:50  [INFO    ]  RQDashboardApp  -  Loading filter options...
+2026-05-01 17:21:50  [INFO    ]  FilterDataProvider  -  Loading filter options from PostgreSQL...
+D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\dashboard\filter_callbacks.py:65: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(sql, conn)
+2026-05-01 17:21:50  [INFO    ]  FilterManager  -  All filter callbacks registered
+2026-05-01 17:21:50  [INFO    ]  RQDashboardApp  -  Dashboard ready at http://localhost:8050
