@@ -36,7 +36,6 @@ def configure_logger(name: str) -> logging.Logger:
     return logger
 
 
-# InsightCsvReader
 
 class InsightCsvReader:
 
@@ -66,8 +65,6 @@ class InsightCsvReader:
             "vendor_risk": self.read("vendor_risk_scores.csv"),
         }
 
-
-# GraphScaleSection
 
 class GraphScaleSection:
 
@@ -127,7 +124,7 @@ class GraphScaleSection:
 
 
 
-# CentralitySection
+
 class CentralitySection:
 
     def __init__(self):
@@ -144,12 +141,11 @@ class CentralitySection:
             "4.2  Degree Centrality Analysis",
             "-" * 50,
             "",
-            "  Degree centrality measures how many direct connections,each node has in the graph. Higher degree indicates greater",
-            "  connectivity and therefore greater risk or exposure.",
+            "  Degree centrality measures how many direct connections,each node has in the graph. Higher degree indicates greater, connectivity and therefore greater risk or exposure.",
             "",
         ]
 
-        # top vulnerability nodes
+       
         lines.append("  The top 10 Most Connected Vulnerability Nodes:")
         if not vuln_df.empty and "exploits_degree" in vuln_df.columns:
             for _, row in vuln_df.head(10).iterrows():
@@ -164,7 +160,7 @@ class CentralitySection:
 
         lines += [""]
 
-        # top software nodes
+       
         lines.append("  The top 10 Most Connected Software Nodes:")
         if not software_df.empty and "total_degree" in software_df.columns:
             for _, row in software_df.head(10).iterrows():
@@ -178,7 +174,7 @@ class CentralitySection:
 
         lines += [""]
 
-        # centrality interpretation
+        
         lines += [
             "  Interpretation:",
             "  Vulnerability nodes with high EXPLOITS degree represent CVEs, that affect a wide range of software products simultaneously.",
@@ -189,9 +185,6 @@ class CentralitySection:
 
         return lines
 
-
-
-# CommunitySection
 
 
 class CommunitySection:
@@ -205,8 +198,7 @@ class CommunitySection:
             "-" * 50,
             "",
             "Method: Jaccard similarity on shared vendor exposure sets.",
-            "  Industries with similarity >= 0.30 were grouped together. This approximates "
-            "the Louvain algorithm without requiring, the Neo4j Graph Data Science plugin.",
+            "  Industries with similarity >= 0.30 were grouped together. This approximates the Louvain algorithm without requiring, the Neo4j Graph Data Science plugin.",
             "",
         ]
 
@@ -240,9 +232,6 @@ class CommunitySection:
 
         return lines
 
-
-
-# VendorRiskSection
 
 
 class VendorRiskSection:
@@ -296,7 +285,6 @@ class VendorRiskSection:
         return lines
 
 
-# RQ5GraphSection
 
 class RQ5GraphSection:
 
@@ -358,9 +346,6 @@ class RQ5GraphSection:
         return lines
 
 
-
-# DashboardSummaryExporter
-
 class DashboardSummaryExporter:
 
     def __init__(self, output_dir: str = INPUT_DIR):
@@ -379,13 +364,13 @@ class DashboardSummaryExporter:
 
         if not stats_df.empty:
             row = stats_df.iloc[0]
-            summary["total_nodes"]   = int(row.get("vulnerability_nodes", 0)) + \
-                                       int(row.get("software_nodes",      0)) + \
-                                       int(row.get("organization_nodes",  0)) + \
-                                       int(row.get("industry_nodes",      0))
-            summary["total_rels"]    = int(row.get("exploits_rels",    0)) + \
-                                       int(row.get("breached_in_rels", 0)) + \
-                                       int(row.get("affects_rels",     0))
+            summary["total_nodes"]   = int(row.get("vulnerability_nodes",0)) + \
+                                       int(row.get("software_nodes",0)) + \
+                                       int(row.get("organization_nodes",0)) + \
+                                       int(row.get("industry_nodes",0))
+            summary["total_rels"]    = int(row.get("exploits_rels",0)) + \
+                                       int(row.get("breached_in_rels",0)) + \
+                                       int(row.get("affects_rels",0))
 
         if not risk_df.empty:
             summary["top_risk_vendor"] = str(risk_df.iloc[0].get("vendor", "Unknown"))
@@ -400,8 +385,6 @@ class DashboardSummaryExporter:
         self.logger.info(f"Dashboard summary exported -> {path}")
         return df
 
-
-# GraphReportGenerator  
 
 
 class GraphReportGenerator:
@@ -467,7 +450,7 @@ class GraphReportGenerator:
         self.logger.info(f"Report written to {output_path}")
         self.logger.info(f"Total lines: {len(all_lines)}")
 
-        # also print to console
+        
         for line in all_lines:
             self.logger.info(f"  {line}")
 
