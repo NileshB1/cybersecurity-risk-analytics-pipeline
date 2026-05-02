@@ -70,7 +70,7 @@ class FilterDataProvider:
             return pd.DataFrame()
 
     def get_year_range(self) -> Tuple[int, int]:
-       
+        """It will get the min and max breach years for the year slider"""
         df = self._query("SELECT EXTRACT(YEAR FROM breach_date)::INT AS yr FROM breaches WHERE breach_date IS NOT NULL;")
         if df.empty:
             return 2005, 2024
@@ -84,7 +84,7 @@ class FilterDataProvider:
         return [{"label": ind, "value": ind} for ind in df["industry"].tolist()]
 
     def get_severity_range(self) -> Tuple[float, float]:
-       
+        """It will get the min and max severity scores for the slider"""
         df = self._query("SELECT MIN(severity) AS mn, MAX(severity) AS mx FROM vulnerabilities WHERE severity IS NOT NULL;")
         if df.empty:
             return 0.0, 10.0
@@ -132,7 +132,7 @@ class FilteredDataLoader:
         return self._query(sql, params)
 
     def severity_filtered(self, min_severity: float) -> pd.DataFrame:
-        
+        """CVE severity distribution above a threshold"""
         return self._query(
             "SELECT severity, vendor, publish_date FROM vulnerabilities WHERE severity >= %s AND severity IS NOT NULL ORDER BY severity DESC;",
             (min_severity,)
@@ -142,7 +142,7 @@ class FilteredDataLoader:
         self, min_severity: float,
         industries:   List[str]
     ) -> pd.DataFrame:
-        
+        """high risk vendor data with optional industry filter"""
         
         path = os.path.join(ANALYSIS_DIR, "rq4_high_risk_vendors.csv")
         if not os.path.exists(path):
@@ -266,14 +266,14 @@ class FilteredChartBuilder:
         return fig
 
     def vendor_risk_filtered(self, df: pd.DataFrame) -> go.Figure:
-        """top vendors bar chart using filtered vendor data"""
+        
         if df.empty or "vendor" not in df.columns:
             return self._empty()
 
         col = "confirmed_exploited" if "confirmed_exploited" in df.columns else df.columns[1]
         top = df.nlargest(10, col)
 
-        # colour bars by exploitation rate if available
+        
         bar_colours = COLOURS["critical"]
         if "exploitation_rate_pct" in top.columns:
             bar_colours = [
