@@ -35,8 +35,6 @@ def configure_logger(name: str) -> logging.Logger:
     return logger
 
 
-# Neo4jConnection
-
 
 class Neo4jConnection:
 
@@ -87,10 +85,6 @@ class Neo4jConnection:
         return False
 
 
-
-# GraphDataLoader
-
-
 class GraphDataLoader:
 
     def __init__(self):
@@ -132,8 +126,6 @@ class GraphDataLoader:
             return pd.DataFrame()
 
 
-# ConstraintManager
-
 
 class ConstraintManager:
 
@@ -167,8 +159,6 @@ class ConstraintManager:
         self.logger.info("Constraints applied")
 
 
-
-# NodeLoader
 
 class NodeLoader:
 
@@ -294,7 +284,7 @@ class NodeLoader:
             rows.append({
                 "org_name": str(row.get("organisation", "")),
                 "industry": str(row.get("industry", "Unknown")),
-                "state":    str(row.get("state", "")),
+                "state": str(row.get("state", "")),
             })
 
         cypher = """
@@ -313,8 +303,6 @@ class NodeLoader:
         return total
 
 
-
-# RelationshipLoader
 
 class RelationshipLoader:
 
@@ -455,8 +443,6 @@ class RelationshipLoader:
 
 
 
-# GraphInsightQueries
-
 class GraphInsightQueries:
 
     OUTPUT_DIR = "graph/output"
@@ -524,12 +510,8 @@ class GraphInsightQueries:
       
         cypher = """
             MATCH path = shortestPath(
-                (v:Vulnerability {cve_id: $cve_id})-[*..6]-(o:Organization {org_name: $org_name})
-            )
-            RETURN [node IN nodes(path) | labels(node)[0] + ': ' + coalesce(
-                node.cve_id, node.software_id, node.org_name, node.name, '?'
-            )] AS path_nodes,
-            length(path) AS path_length
+                (v:Vulnerability {cve_id: $cve_id})-[*..6]-(o:Organization {org_name: $org_name})) RETURN [node IN nodes(path) | labels(node)[0] + ': ' + coalesce(
+                node.cve_id, node.software_id, node.org_name, node.name, '?' )] AS path_nodes, length(path) AS path_length
         """
         self.logger.info(f"Shortest path: {cve_id} -> {org_name}")
         return self._run_query(
@@ -543,10 +525,8 @@ class GraphInsightQueries:
         For each vendor, also return the average severity of their exploited CVEs and the number of distinct products affected.
         """
         cypher = f"""
-            MATCH (v:Vulnerability {{is_exploited: true}})-[:EXPLOITS]->(s:Software)
-            RETURN s.vendor  AS vendor,  COUNT(DISTINCT v) AS exploited_cve_count, AVG(v.severity)  AS avg_severity, COUNT(DISTINCT s.product)   AS distinct_products_affected,
-            ORDER BY exploited_cve_count DESC
-            LIMIT {top_n}
+            MATCH (v:Vulnerability {{is_exploited: true}})-[:EXPLOITS]->(s:Software) RETURN s.vendor  AS vendor,  COUNT(DISTINCT v) AS exploited_cve_count, AVG(v.severity)  AS avg_severity, COUNT(DISTINCT s.product)   AS distinct_products_affected,
+            ORDER BY exploited_cve_count DESCLIMIT {top_n}
         """
         rows = self._run_query(cypher, "High risk vendors (graph)")
         df = pd.DataFrame(rows)
@@ -570,7 +550,6 @@ class GraphInsightQueries:
         return results
 
 
-# Neo4jLoader 
 
 class Neo4jLoader:
     """
@@ -590,7 +569,6 @@ class Neo4jLoader:
     def run(self) -> bool:
         self.logger.info("Neo4jLoader starting full graph load.")
 
-        # load source data
         merged_df = self._data_loader.load_merged_cve_kev()
         breach_df = self._data_loader.load_breaches_csv()
 
@@ -616,7 +594,6 @@ class Neo4jLoader:
             rel_loader.create_exploits_relationships(merged_df)
             rel_loader.create_breached_in_relationships(breach_df)
             rel_loader.create_affects_relationships(merged_df, breach_df)
-
   
             GraphInsightQueries(driver).run_all_insights()
 
