@@ -9,9 +9,6 @@ from kafka.errors import KafkaError, NoBrokersAvailable
  
 from kafka.kafka_config import KafkaConfig, configure_logger
 
-#
-# Serialiser Helper
-# 
  
 class RecordSerialiser:
     """
@@ -27,7 +24,7 @@ class RecordSerialiser:
             record,
             ensure_ascii=False,
             separators=(",", ":"),
-            default=str       # handle datetime objects gracefully
+            default=str       
         ).encode("utf-8")
  
     @staticmethod
@@ -36,9 +33,6 @@ class RecordSerialiser:
         return json.loads(data.decode("utf-8"))
  
 
-# 
-# Delivery Callback
-# 
  
 class DeliveryCallback:
     """
@@ -71,10 +65,7 @@ class DeliveryCallback:
         total = self.delivered + self.failed
         return f"{self.delivered}/{total} messages delivered ({self.failed} failed)"
  
- 
-# 
-# Producer
-# 
+
  
 class CybersecProducer:
     """
@@ -96,7 +87,6 @@ class CybersecProducer:
         self._producer: Optional[KafkaProducer] = None
         self._connect_with_retry()
  
-    # Connection 
  
     def _connect_with_retry(self):
         """
@@ -128,8 +118,7 @@ class CybersecProducer:
             f"Could not connect to Kafka after {self.MAX_CONNECT_RETRIES} attempts. "
             f"Is Kafka running at {self.config.bootstrap_servers}?"
         )
- 
-    # Core Publish Method 
+
  
     def _publish_batch(
         self,
@@ -158,12 +147,11 @@ class CybersecProducer:
             except KafkaError as kafka_err:
                 self.logger.error(f"KafkaError on record {record.get('cve_id', '?')}: {kafka_err}")
                 self.callback.failed += 1
- 
-        # Block until all in-flight messages are acknowledged
+
         self._producer.flush()
         self.logger.info(f"{label} batch complete - {self.callback.summary()}")
  
-    # Public Topic Methods
+  
  
     def publish_cve_batch(self, records: List[Dict[str, Any]]) -> None:
         """
@@ -197,7 +185,6 @@ class CybersecProducer:
             label="Breach"
         )
  
-    # Lifecycle 
  
     def close(self) -> None:
         """Flush any remaining messages and close the Kafka connection cleanly."""
