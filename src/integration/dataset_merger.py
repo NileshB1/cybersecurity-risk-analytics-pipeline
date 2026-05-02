@@ -33,8 +33,6 @@ def configure_logger(name: str) -> logging.Logger:
 
 
 
-# DatasetLoader
-
 class DatasetLoader:
 
     def __init__(self):
@@ -68,8 +66,6 @@ class DatasetLoader:
         breach_df = self.load_json(breach_path)
         return cve_df, kev_df, breach_df
 
-
-# DatasetProfiler
 
 class DatasetProfiler:
 
@@ -117,8 +113,6 @@ class DatasetProfiler:
         self.profile(breach_df,"Breach Records")
 
 
-
-# OverlapAnalyser
 
 class OverlapAnalyser:
 
@@ -222,7 +216,6 @@ class OverlapAnalyser:
 
 
 
-# MergeStrategyReport
 
 class MergeStrategyReport:
 
@@ -278,7 +271,6 @@ class MergeStrategyReport:
         for line in lines:
             self.logger.info(f"  {line}")
 
-# DatasetMerger 
 
 class DatasetMerger:
    
@@ -299,7 +291,7 @@ class DatasetMerger:
         
         self.logger.info("Starting dataset exploration.")
 
-        # load
+        
         cve_df, kev_df, breach_df = self._loader.load_all(
             cve_path, kev_path, breach_path
         )
