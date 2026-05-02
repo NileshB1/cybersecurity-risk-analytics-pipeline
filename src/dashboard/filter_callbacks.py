@@ -216,7 +216,7 @@ class FilteredChartBuilder:
                 fig.add_trace(go.Scatter(x=ind_data["year"],y=ind_data["breach_count"],mode="lines+markers",name=ind,line=dict(width=2),))
             title = f"Breach Trend — {', '.join(industries[:3])}{'...' if len(industries) > 3 else ''}"
         else:
-            # aggregate all industries into one line
+            
             agg = df.groupby("year")["breach_count"].sum().reset_index()
             agg = agg.sort_values("year")
             fig.add_trace(go.Scatter(x=agg["year"],y=agg["breach_count"],mode="lines+markers",line=dict(color=COLOURS["secondary"], width=2.5),fill="tozeroy",fillcolor="rgba(224,82,82,0.1)",name="All Industries"))
