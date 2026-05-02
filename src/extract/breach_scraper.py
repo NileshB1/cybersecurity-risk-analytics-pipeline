@@ -256,15 +256,11 @@ class BreachScraper(BaseExtractor):
     """
     
     Main scraper class responsible for fetching and publishing breach data.
-    
-    NOTE: This scraper currently expands the 1,000-row Tableau CSV to 50k records for pipeline testing.
-    For real distinct records from privacyrights.org, use the Playwright-based scrapers in
-    breach_scraper_playwright.py or breach_scraper_hybrid.py (requires Cloudflare Turnstile token handling).
     """
 
     DEFAULT_SLEEP_SEC = 2
     DEFAULT_MAX_PAGES = 100
-    DEFAULT_TARGET_RECORDS = 50_000  # Expanded from ~1k CSV to 50k for pipeline testing
+    DEFAULT_TARGET_RECORDS = 50_000
     DEFAULT_BATCH_SIZE = 5_000
 
     def __init__(

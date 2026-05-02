@@ -17,3 +17,4 @@ Thumbs.db
 # Python cache
 __pycache__/
 *.pyc
+kev_raw.json

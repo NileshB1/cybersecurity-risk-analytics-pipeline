@@ -1,9 +1,5 @@
-# This file tells Dagster where to find the pipeline code.
-# Place this in the PROJECT ROOT (same level as run_pipeline.py).
-
 load_from:
   - python_package:
       package_name: dagster_pipeline
       attribute: defs
-      # 'defs' is the Definitions object in dagster_pipeline/__init__.py
-      # Dagster reads this to discover all jobs, schedules, resources
+      working_directory: src
