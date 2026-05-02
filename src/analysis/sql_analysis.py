@@ -277,7 +277,7 @@ class ResearchQueryDefinitions:
                         e.vendor,
                         COUNT(DISTINCT e.cve_id) AS exploited_cves,
                     COUNT(DISTINCT e.product) AS products_affected,
-                        ROUND(AVG(v.severity)::NUMERIC, 2) AS avg_cvss_score,
+                        ROUND(COALESCE(AVG(v.severity), 0)::NUMERIC, 2) AS avg_cvss_score,
                         MAX(v.severity)  AS highest_cvss,  MIN(e.exploitation_date) AS first_exploited,
                     MAX(e.exploitation_date) AS most_recent_exploit,
                     COUNT(DISTINCT  EXTRACT(YEAR FROM e.exploitation_date) )::INT AS years_active

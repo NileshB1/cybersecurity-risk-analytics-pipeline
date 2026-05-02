@@ -8,6 +8,10 @@ import os
 import sys
 import warnings
 warnings.filterwarnings("ignore")
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
 
 import pandas as pd
 import numpy as np
@@ -22,6 +26,8 @@ import seaborn as sns
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
+
+plt.ioff()
 
 ANALYSIS_DIR = "analysis/output"
 OUTPUT_DIR   = "analysis/report_figures"
@@ -55,18 +61,20 @@ SEV_COLOURS = {
 def load(filename):
     path = os.path.join(ANALYSIS_DIR, filename)
     if not os.path.exists(path):
-        print(f"  SKIP {filename} — not found")
+        print(f"SKIP {filename} — not found")
         return pd.DataFrame()
     df = pd.read_csv(path, low_memory=False)
-    print(f"  Loaded {filename}: {len(df):,} rows")
+    print(f"Loaded {filename}: {len(df):,} rows")
     return df
 
 
 def save_fig(fig, name):
     path = os.path.join(OUTPUT_DIR, name)
-    fig.savefig(path, dpi=300, bbox_inches="tight", facecolor="white")
+    fig.savefig(path, dpi=150, bbox_inches="tight", facecolor="white", format="png")
     plt.close(fig)
-    print(f"  Saved -> {path}")
+    size = os.path.getsize(path)
+    print(f" Saved: {path}")
+    
 
 
 # Figure 1: Industry Breach count
@@ -75,6 +83,11 @@ def fig_industry_breach_count():
     df = load("a1_industry_impact.csv")
     if df.empty:
         return
+
+    df["industry"] = df["industry"].replace({
+        "Unknown": "All Other Industries", "Unkn": "All Other Industries",
+        "unknown": "All Other Industries", "Bsr": "Business / Services",
+    })
 
     df = df.sort_values("breach_count", ascending=True)
     colours = [PALETTE["primary"]] * len(df)
@@ -247,7 +260,7 @@ def fig_top_vendors():
 
     # colour bars by avg_cvss_score
     norm = plt.Normalize(df["avg_cvss_score"].min(), df["avg_cvss_score"].max())
-    cmap = plt.cm.get_cmap("Reds")
+    cmap = matplotlib.colormaps["Reds"]
     colours = [cmap(norm(v)) for v in df["avg_cvss_score"]]
 
     fig, ax = plt.subplots(figsize=(9, 6))
