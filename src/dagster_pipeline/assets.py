@@ -93,7 +93,7 @@ def read_mongo_raw(context: AssetExecutionContext) -> Dict[str, int]:
     description="Clean and normalise raw MongoDB records using DataTransformer",
 )
 def transform_data(
-    context:       AssetExecutionContext,
+    context: AssetExecutionContext,
     read_mongo_raw: Dict[str, int],
 ) -> Dict[str, str]:
     """
@@ -149,19 +149,17 @@ def load_to_postgres(
     logger.info(f"Loading clean records into PostgreSQL....")
 
     # read temp files from previous asset
-    #TODO 1,2
+    with open(transform_data["cve_path"]) as f: clean_cves= json.load(f)
+    with open(transform_data["kev_path"]) as f: clean_kev= json.load(f)
     with open(transform_data["breach_path"]) as f: clean_breaches = json.load(f)
 
     context.log.info(
-        f"Loaded from temp files: "
-        # TODO 1, 2
-        f"Breach={len(clean_breaches):,}"
+        f"Loaded from temp files: CVE={len(clean_cves):,} KEV={len(clean_kev):,} Breach={len(clean_breaches)}"
     )
 
     from load.postgres_loader import PostgresLoader
     loader  = PostgresLoader()
-    #TODO 1, 2
-    success = loader.load_all(clean_breaches)
+    success = loader.load_all(clean_cves, clean_kev, clean_breaches)
 
     if not success:
         # warn but dont raise - partial load is better than no load
