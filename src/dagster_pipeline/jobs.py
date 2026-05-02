@@ -15,7 +15,7 @@ cybersec_full_pipeline = define_asset_job(
     selection=AssetSelection.groups("cybersecurity_pipeline"),
     tags={
         "project": "cybersec_analytics",
-        "team":    "group_e",
+        "team": "group_e",
     }
 )
 
@@ -26,7 +26,7 @@ cybersec_quick_test = define_asset_job(
     selection=AssetSelection.groups("cybersecurity_pipeline"),
     tags={
         "project": "cybersec_analytics",
-        "team":    "group_e",
-        "env":     "test",
+        "team": "group_e",
+        "env": "test",
     }
 )
