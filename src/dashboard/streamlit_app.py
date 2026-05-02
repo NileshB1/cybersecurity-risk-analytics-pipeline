@@ -185,23 +185,23 @@ def fmt_number(n) -> str:
 
 # lad CSVc
 
-df_a1 = load_csv("a1_industry_impact.csv")
+df_a1=load_csv("a1_industry_impact.csv")
 df_a2 = load_csv("a2_yearly_threat_landscape.csv")
-df_a3 = load_csv("a3_attack_severity_patterns.csv")
-df_a4 = load_csv("a4_most_exploited_vendors.csv")
-df_a5 = load_csv("a5_time_to_weaponisation.csv")
+df_a3=load_csv("a3_attack_severity_patterns.csv")
+df_a4=load_csv("a4_most_exploited_vendors.csv")
+df_a5=load_csv("a5_time_to_weaponisation.csv")
 
-df_breach_types  = load_csv("extra_breach_types.csv")
-df_cve_monthly   = load_csv("extra_cve_monthly_volume.csv")
-df_industry_enr  = load_csv("extra_industry_summary.csv")
-df_top_products  = load_csv("extra_top_products.csv")
-df_weapon_stats  = load_csv("extra_weaponisation_summary.csv")
+df_breach_types = load_csv("extra_breach_types.csv")
+df_cve_monthly = load_csv("extra_cve_monthly_volume.csv")
+df_industry_enr=load_csv("extra_industry_summary.csv")
+df_top_products= load_csv("extra_top_products.csv")
+df_weapon_stats = load_csv("extra_weaponisation_summary.csv")
 
 
 # sidebar
 
 with st.sidebar:
-    st.markdown("### 🔐 Cybersecurity\nRisk Analytics")
+    st.markdown("### Cybersecurity\nRisk Analytics")
     st.markdown("---")
     st.markdown("**Group E · NCI MS Data Analytics**")
     st.markdown("Nilesh · Shivakshi · Teena")
@@ -237,12 +237,8 @@ with st.sidebar:
 
     # severity filter
     min_severity = st.slider(
-        "Min CVSS Severity",
-        min_value=0.0,
-        max_value=10.0,
-        value=0.0,
-        step=0.5,
-    )
+        "Min CVSS Severity", min_value=0.0,
+        max_value=10.0, value=0.0,  step=0.5, )
 
     st.markdown("---")
     st.markdown("**Data Sources**")
@@ -255,7 +251,7 @@ with st.sidebar:
         st.rerun()
 
 
-# ── apply filters ─────────────────────────────────────────────────────────────
+# apply filters
 
 def filter_by_year(df, col="year"):
     if df.empty or col not in df.columns:
@@ -272,7 +268,7 @@ df_a1_f = filter_by_industry(df_a1)
 df_a2_f = filter_by_year(df_a2)
 
 
-# ── header ────────────────────────────────────────────────────────────────────
+# header
 
 st.markdown("""
 <div class="main-header">
@@ -354,8 +350,7 @@ else:
             orientation="h",
             marker=dict(
                 color=df_plot["breach_count"],
-                colorscale="Blues",
-                showscale=False,
+                colorscale="Blues", showscale=False,
             ),
             text=df_plot["breach_count"].apply(lambda x: f"{int(x):,}"),
             textposition="outside",
@@ -364,10 +359,8 @@ else:
         fig.update_layout(
             title="Breach Count by Industry Sector",
             xaxis_title="Number of Breaches",
-            yaxis_title="",
-            template=PLOTLY_TEMPLATE,
-            height=380,
-            margin=dict(l=10, r=60, t=45, b=10),
+            yaxis_title="", template=PLOTLY_TEMPLATE,
+            height=380,  margin=dict(l=10, r=60, t=45, b=10),
             font=dict(family="IBM Plex Sans"),
         )
         st.plotly_chart(fig, use_container_width=True)
@@ -377,11 +370,9 @@ else:
         df_plot2 = df_a1_f[df_a1_f["total_records_exposed"] > 0].copy()
         if not df_plot2.empty:
             fig2 = px.treemap(
-                df_plot2,
-                path=["industry"],
+                df_plot2, path=["industry"],
                 values="total_records_exposed",
-                color="breach_count",
-                color_continuous_scale="RdBu_r",
+                color="breach_count",   color_continuous_scale="RdBu_r",
                 title="Records Exposed by Sector (size = volume, colour = breach count)",
                 hover_data={"total_records_exposed": ":,"},
             )
@@ -414,10 +405,8 @@ else:
         with st.expander("Breach Type Breakdown"):
             fig_bt = px.bar(
                 df_breach_types.sort_values("incidents", ascending=False),
-                x="breach_type",
-                y="incidents",
-                color="incidents",
-                color_continuous_scale="Reds",
+                x="breach_type", y="incidents",
+                color="incidents", color_continuous_scale="Reds",
                 labels={"breach_type": "Breach Type", "incidents": "Incidents"},
                 title="Incidents by Breach Type",
                 text="incidents",
@@ -527,7 +516,9 @@ else:
     # monthly CVE trend
     if not df_cve_monthly.empty:
         with st.expander("Monthly CVE Publication Trend"):
-            df_cve_monthly["month"] = pd.to_datetime(df_cve_monthly["month"], errors="coerce")
+            df_cve_monthly["month"] = (
+                pd.to_datetime(df_cve_monthly["month"], errors="coerce", utc=True)
+                .dt.tz_localize(None))
             fig_mo = go.Figure()
             fig_mo.add_trace(go.Scatter(
                 x=df_cve_monthly["month"], y=df_cve_monthly["cve_count"],
