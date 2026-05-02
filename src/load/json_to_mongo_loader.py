@@ -7,7 +7,6 @@ Reads:
     - cve_raw.json
     - breach_raw.json
 
-(from the repo root) and loads them into MongoDB using upsert logic
 """
 
 import json
@@ -19,12 +18,9 @@ import ijson
 from dotenv import load_dotenv
 
 
-# Environment setup
 
-# Load environment variables from src/.env
 load_dotenv(dotenv_path=Path("src")/".env")
 
-# Allow imports from src/
 sys.path.insert(0, str(Path("src")))
 
 from kafka.cve_consumer import MongoWriter
@@ -33,7 +29,6 @@ from kafka.kafka_config import configure_logger
 logger = configure_logger("JsonToMongoLoader")
 
 
-# File loading helpers
 
 def load_json_file(file_path: Path) -> list:
     """
@@ -52,7 +47,7 @@ def load_json_file(file_path: Path) -> list:
     try:
         file_size = file_path.stat().st_size
 
-        # Small file -> standard json.load
+        
         if file_size < 10 * 1024 * 1024:  # <10MB
             with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -62,7 +57,7 @@ def load_json_file(file_path: Path) -> list:
             return records
 
         
-        # Large file -> streaming
+        
         logger.info(
             f"{file_path.name} is {file_size / (1024 * 1024):.1f}MB — using streaming parser"
         )
@@ -71,7 +66,7 @@ def load_json_file(file_path: Path) -> list:
 
         try:
             with open(file_path, "r", encoding="utf-8") as f:
-                # Peek first non-whitespace character
+                
                 start_pos = f.tell()
                 first_char = f.read(1)
 
@@ -80,7 +75,7 @@ def load_json_file(file_path: Path) -> list:
 
                 f.seek(start_pos)
 
-                # Case 1: JSON array
+                
                 if first_char == "[":
                     for item in ijson.items(f, "item"):
                         records.append(item)
@@ -90,7 +85,7 @@ def load_json_file(file_path: Path) -> list:
                     )
                     return records
 
-                # Case 2: JSONL (newline-delimited JSON)
+                
                 logger.info("Detected JSONL format")
 
                 skipped_lines = 0
@@ -191,9 +186,6 @@ def resolve_loader_for_file(file_path: Path):
     return load_cve_data
 
 
-# 
-# Data loaders (per dataset)
-
 
 def load_kev_data(writer: MongoWriter, file_path: Path) -> int:
     """Load KEV records into MongoDB."""
@@ -246,10 +238,7 @@ def load_breach_data(writer: MongoWriter, file_path: Path) -> int:
     logger.info(f"Breach load complete: {len(records)} records queued")
     return len(records)
 
-
-# 
-# Main entry point
-# 
+ 
 
 def main():
     """Run the full load process
@@ -275,8 +264,6 @@ def main():
     logger.info("MongoDB Raw Data Loader")
     logger.info("=" * 50)
 
-    # 
-    # Initialize MongoDB writer
     try:
         MongoWriter.BATCH_THRESHOLD = args.batch
         writer = MongoWriter()
@@ -284,9 +271,7 @@ def main():
         logger.error(f"Could not initialize MongoWriter: {err}")
         sys.exit(1)
 
-    # 
-    # File locations
-    # 
+    
     kev_file = repo_root/"kev_raw.json"
     cve_file = repo_root /"cve_raw.json"
     breach_file = repo_root/"breach_raw.json"
@@ -313,7 +298,7 @@ def main():
                 failures.append(f"{file_path.name}: {err}")
                 logger.error(f"Single-file load failed for {file_path.name}", exc_info=True)
         else:
-            # Load each dataset independently so one bad file does not block the others.
+            
             for label, loader, file_path in (
                 ("kev", load_kev_data, kev_file),
                 ("breach", load_breach_data, breach_file),
@@ -339,7 +324,7 @@ def main():
         writer.flush_all()
 
 
-        # Summary
+        
         written = writer.total_written()
 
         logger.info("=" * 60)
@@ -364,8 +349,6 @@ def main():
     finally:
         writer.close()
 
-
-# ---------------------------------------------------------------------
 
 if __name__ == "__main__":
     main()
