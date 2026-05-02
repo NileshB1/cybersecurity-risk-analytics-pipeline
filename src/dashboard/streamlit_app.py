@@ -1,10 +1,3 @@
-"""
-
-Analysis sections:
-    A1: Industry Impact Analysis, A2:` Yearly Threat Landscape
-    A3: Attack Severity Patterns
-    A4: Most Exploited Vendors, A5: Time to Weaponisation
-"""
 
 import os
 import sys
@@ -200,7 +193,6 @@ def rename_unknown(df: pd.DataFrame, col: str = "industry") -> pd.DataFrame:
     return df
 
 
-# lad CSVc
 
 df_a1=load_csv("a1_industry_impact.csv")
 df_a2 = load_csv("a2_yearly_threat_landscape.csv")
@@ -217,7 +209,7 @@ df_weapon_stats = load_csv("extra_weaponisation_summary.csv")
 df_a1 = rename_unknown(df_a1)
 df_breach_types = rename_unknown(df_breach_types, col="breach_type")
 
-# sidebar
+
 
 with st.sidebar:
     st.markdown("### Cybersecurity\nRisk Analytics")
@@ -240,7 +232,7 @@ with st.sidebar:
         step=1,
     )
 
-    # industry filter
+
     industries = []
     if not df_a1.empty and "industry" in df_a1.columns:
         industries = sorted(df_a1["industry"].dropna().unique().tolist())
@@ -268,8 +260,6 @@ with st.sidebar:
         st.rerun()
 
 
-# apply filters
-
 def filter_by_year(df, col="year"):
     if df.empty or col not in df.columns:
         return df
@@ -285,7 +275,6 @@ df_a1_f = filter_by_industry(df_a1)
 df_a2_f = filter_by_year(df_a2)
 
 
-# header
 
 st.markdown("""
 <div class="main-header">
@@ -296,11 +285,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# KPIs
 
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
-# total CVEs
 total_cves = df_a3["total_cves"].sum() if not df_a3.empty and "total_cves" in df_a3.columns else 0
 kpi1.markdown(f"""
 <div class="kpi-box" style="border-left-color: #1B3A6B;">
@@ -310,7 +297,7 @@ kpi1.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# exploited CVEs
+
 total_exploited = df_a3["exploited_cves"].sum() if not df_a3.empty and "exploited_cves" in df_a3.columns else 0
 kpi2.markdown(f"""
 <div class="kpi-box" style="border-left-color: #C0392B;">
@@ -320,7 +307,7 @@ kpi2.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# total breaches
+
 total_breaches = df_a1["breach_count"].sum() if not df_a1.empty and "breach_count" in df_a1.columns else 0
 kpi3.markdown(f"""
 <div class="kpi-box" style="border-left-color: #E67E22;">
@@ -330,7 +317,7 @@ kpi3.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# records exposed
+
 total_records = df_a1["total_records_exposed"].sum() if not df_a1.empty and "total_records_exposed" in df_a1.columns else 0
 kpi4.markdown(f"""
 <div class="kpi-box" style="border-left-color: #27AE60;">
@@ -344,7 +331,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 
 # 
-# 1: Industry Impact Analysis
+# 
 
 st.markdown("""
 <div class="section-header">
@@ -359,7 +346,7 @@ else:
     col_left, col_right = st.columns(2)
 
     with col_left:
-        # horizontal bar: breach count by industry
+        
         df_plot = df_a1_f.sort_values("breach_count", ascending=True)
         colour_map = {
         "Healthcare":"#C39BD3", "All Others": "#A9DFBF",
@@ -384,7 +371,7 @@ else:
         st.plotly_chart(fig, use_container_width=True)
 
     with col_right:
-        # treemap: records exposed by industry
+       
         df_plot2 = df_a1_f[df_a1_f["total_records_exposed"] > 0].copy()
         df_plot2["records_fmt"] = df_plot2["total_records_exposed"].apply(
                 lambda x: f"{x/1e9:.1f}B" if x >= 1e9 else f"{x/1e6:.1f}M" if x >= 1e6 else f"{x/1e3:.0f}K"
@@ -406,7 +393,7 @@ else:
             )
             st.plotly_chart(fig2, use_container_width=True)
 
-    # finding card
+   
     if not df_a1_f.empty and "breach_count" in df_a1_f.columns:
         top_sector = df_a1_f.loc[df_a1_f["breach_count"].idxmax(), "industry"]
         top_count  = df_a1_f["breach_count"].max()
@@ -419,7 +406,7 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-    # breach type breakdown if available
+    
     if not df_breach_types.empty and "breach_type" in df_breach_types.columns:
         with st.expander("Breach Type Breakdown"):
             df_bt = df_breach_types.copy()
@@ -439,9 +426,6 @@ else:
 
 
 
-#A2: Yearly Threat Landscape
-
-
 st.markdown("""
 <div class="section-header">
     <h3>A2: Yearly Threat Landscape</h3>
@@ -457,7 +441,7 @@ else:
     col_l, col_r = st.columns(2)
 
     with col_l:
-        # stacked area: CVE breakdown by severity
+        
         fig_cve = go.Figure()
         fig_cve.add_trace(go.Scatter(
             x=df_a2_f["year"], y=df_a2_f["critical_count"],
@@ -491,7 +475,7 @@ else:
         st.plotly_chart(fig_cve, use_container_width=True)
 
     with col_r:
-        # dual-axis: total CVEs vs breaches
+       
         fig_dual = make_subplots(specs=[[{"secondary_y": True}]])
         fig_dual.add_trace(go.Bar(
             x=df_a2_f["year"],
@@ -533,7 +517,7 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-    # monthly CVE trend
+    
     if not df_cve_monthly.empty:
         with st.expander("Monthly CVE Publication Trend"):
             df_cve_monthly["month"] = (
@@ -561,7 +545,7 @@ else:
 
 
 
-# A3: Attack Severity Patterns
+
 
 st.markdown("""
 <div class="section-header">
@@ -584,7 +568,7 @@ else:
     col_l, = st.columns(1)
 
     with col_l:
-        # grouped bar: total vs exploited
+        
         fig_sev = go.Figure()
         fig_sev.add_trace(go.Bar(
             name="Total CVEs",
@@ -644,9 +628,6 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-
-
-# A4: Most Exploited Vendors
 
 
 st.markdown("""
@@ -715,7 +696,7 @@ else:
             )
             st.plotly_chart(fig_sc, use_container_width=True)
 
-    # top exploited products table
+   
     if not df_top_products.empty:
         with st.expander("Top Exploited Products"):
             show_cols = ["vendor", "product", "exploited_count", "avg_cvss", "first_seen", "last_seen"]
@@ -738,10 +719,6 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-
-
-# A5: Time to Weaponisation
-# 
 
 st.markdown("""
 <div class="section-header">
@@ -771,7 +748,7 @@ else:
     col_l, col_r = st.columns(2)
 
     with col_l:
-        # box plot by time bracket
+        
         if "time_bracket" in df_a5_valid.columns and not df_a5_valid.empty:
             fig_box = go.Figure()
             for bracket in bracket_order:
@@ -804,7 +781,7 @@ else:
             st.plotly_chart(fig_box, use_container_width=True)
 
     with col_r:
-        # pie chart of time brackets
+        
         if "time_bracket" in df_a5_valid.columns:
             bracket_counts = df_a5_valid["time_bracket"].value_counts().reset_index()
             bracket_counts.columns = ["bracket", "count"]
@@ -833,7 +810,7 @@ else:
             )
             st.plotly_chart(fig_pie, use_container_width=True)
 
-    # stat cards from weaponisation summary
+    
     if not df_weapon_stats.empty:
         s = df_weapon_stats.iloc[0]
         w1, w2, w3, w4 = st.columns(4)
@@ -851,7 +828,6 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-# Footer
 
 st.markdown("---")
 st.markdown("""
