@@ -70,32 +70,28 @@ class FilterDataProvider:
             return pd.DataFrame()
 
     def get_year_range(self) -> Tuple[int, int]:
-        """get min and max breach years for the year slider"""
-        df = self._query("SELECT EXTRACT(YEAR FROM breach_date)::INT AS yr "
-            "FROM breaches WHERE breach_date IS NOT NULL;")
+        """It will get the min and max breach years for the year slider"""
+        df = self._query("SELECT EXTRACT(YEAR FROM breach_date)::INT AS yr FROM breaches WHERE breach_date IS NOT NULL;")
         if df.empty:
             return 2005, 2024
         return int(df["yr"].min()), int(df["yr"].max())
 
     def get_industry_options(self) -> List[Dict[str, str]]:
-        """get all distinct industries for the multi-select dropdown"""
-        df = self._query("SELECT DISTINCT industry FROM breaches "
-            "WHERE industry IS NOT NULL AND industry != 'Unknown' "
-            "ORDER BY industry;")
+        """It will get all distinct industries for the multi-select dropdown"""
+        df = self._query("SELECT DISTINCT industry FROM breaches WHERE industry IS NOT NULL AND industry != 'Unknown' ORDER BY industry;")
         if df.empty:
             return []
         return [{"label": ind, "value": ind} for ind in df["industry"].tolist()]
 
     def get_severity_range(self) -> Tuple[float, float]:
-        """min and max severity scores for the slider"""
-        df = self._query("SELECT MIN(severity) AS mn, MAX(severity) AS mx "
-            "FROM vulnerabilities WHERE severity IS NOT NULL;")
+        """It will get the min and max severity scores for the slider"""
+        df = self._query("SELECT MIN(severity) AS mn, MAX(severity) AS mx FROM vulnerabilities WHERE severity IS NOT NULL;")
         if df.empty:
             return 0.0, 10.0
         return float(df["mn"].iloc[0]), float(df["mx"].iloc[0])
 
     def get_all_options(self) -> Dict[str, Any]:
-        """load all filter option data at once"""
+        """It will load all filter option data at once"""
         self.logger.info("Loading filter options from PostgreSQL...")
         yr_min, yr_max = self.get_year_range()
         return {"year_min": yr_min,"year_max": yr_max,"industry_options": self.get_industry_options(),"severity_min": 0.0,"severity_max": 10.0,}
@@ -118,40 +114,20 @@ class FilteredDataLoader:
             return pd.DataFrame()
 
     def breach_trend_filtered(self,year_range: List[int],industries: List[str]) -> pd.DataFrame:
-        """breach count per year filtered by year range and industries"""
+        """The breach count per year filtered by year range and industries"""
         yr_min = year_range[0] if year_range else 2005
         yr_max = year_range[1] if len(year_range) > 1 else 2024
 
         if industries:
             # industry filter active
             industry_placeholders = ",".join(["%s"] * len(industries))
-            sql = f"""
-                SELECT
-                    EXTRACT(YEAR FROM breach_date)::INT AS year,
-                    industry,
-                    COUNT(*)                            AS breach_count,
-                    COALESCE(SUM(records_exposed), 0)   AS records_exposed
-                FROM breaches
-                WHERE breach_date IS NOT NULL
-                  AND EXTRACT(YEAR FROM breach_date) BETWEEN %s AND %s
-                  AND industry IN ({industry_placeholders})
-                GROUP BY year, industry
-                ORDER BY year;
-            """
+            sql = f"""SELECT EXTRACT(YEAR FROM breach_date)::INT AS year, industry, COUNT(*) AS breach_count,COALESCE(SUM(records_exposed), 0)   AS records_exposed
+                FROM breaches WHERE breach_date IS NOT NULL AND EXTRACT(YEAR FROM breach_date) BETWEEN %s AND %s
+                  AND industry IN ({industry_placeholders}) GROUP BY year, industry ORDER BY year;"""
             params = tuple([yr_min, yr_max] + industries)
         else:
-            sql = """
-                SELECT
-                    EXTRACT(YEAR FROM breach_date)::INT AS year,
-                    industry,
-                    COUNT(*)                            AS breach_count,
-                    COALESCE(SUM(records_exposed), 0)   AS records_exposed
-                FROM breaches
-                WHERE breach_date IS NOT NULL
-                  AND EXTRACT(YEAR FROM breach_date) BETWEEN %s AND %s
-                GROUP BY year, industry
-                ORDER BY year;
-            """
+            sql = """SELECT EXTRACT(YEAR FROM breach_date)::INT AS year, industry, COUNT(*) AS breach_count, COALESCE(SUM(records_exposed), 0)   AS records_exposed
+                FROM breaches WHERE breach_date IS NOT NULL AND EXTRACT(YEAR FROM breach_date) BETWEEN %s AND %s GROUP BY year, industry ORDER BY year;"""
             params = (yr_min, yr_max)
 
         return self._query(sql, params)
@@ -159,10 +135,7 @@ class FilteredDataLoader:
     def severity_filtered(self, min_severity: float) -> pd.DataFrame:
         """CVE severity distribution above a threshold"""
         return self._query(
-            "SELECT severity, vendor, publish_date "
-            "FROM vulnerabilities "
-            "WHERE severity >= %s AND severity IS NOT NULL "
-            "ORDER BY severity DESC;",
+            "SELECT severity, vendor, publish_date FROM vulnerabilities WHERE severity >= %s AND severity IS NOT NULL ORDER BY severity DESC;",
             (min_severity,)
         )
 
@@ -171,14 +144,13 @@ class FilteredDataLoader:
         industries:   List[str]
     ) -> pd.DataFrame:
         """high risk vendor data with optional industry filter"""
-        # read from the pre-computed CSV - faster than re-running the join query
+        
         path = os.path.join(ANALYSIS_DIR, "rq4_high_risk_vendors.csv")
         if not os.path.exists(path):
             self.logger.warning(f"RQ4 CSV not found at {path}")
             return pd.DataFrame()
         df = pd.read_csv(path)
 
-        # filter by severity if set
         if min_severity and "avg_cvss_score" in df.columns:
             df = df[df["avg_cvss_score"] >= min_severity]
 
@@ -191,25 +163,19 @@ class FilteredDataLoader:
         yr_min = year_range[0] if year_range else 2005
         yr_max = year_range[1] if len(year_range) > 1 else 2024
 
-        # CVE count doesnt change based on industry filter
         cve_df = self._query("SELECT COUNT(*) AS n FROM vulnerabilities;")
         kev_df = self._query("SELECT COUNT(*) AS n FROM exploited_vulnerabilities;")
 
         if industries:
             industry_placeholders = ",".join(["%s"] * len(industries))
             breach_sql = f"""
-                SELECT COUNT(*) AS n, COALESCE(SUM(records_exposed),0) AS r
-                FROM breaches
-                WHERE EXTRACT(YEAR FROM breach_date) BETWEEN %s AND %s
-                  AND industry IN ({industry_placeholders});
-            """
+                SELECT COUNT(*) AS n, COALESCE(SUM(records_exposed),0) AS r FROM breaches WHERE EXTRACT(YEAR FROM breach_date) BETWEEN %s AND %s
+                  AND industry IN ({industry_placeholders}); """
             params  = tuple([yr_min, yr_max] + industries)
             b_df    = self._query(breach_sql, params)
         else:
             b_df = self._query(
-                "SELECT COUNT(*) AS n, COALESCE(SUM(records_exposed),0) AS r "
-                "FROM breaches "
-                "WHERE EXTRACT(YEAR FROM breach_date) BETWEEN %s AND %s;",
+                "SELECT COUNT(*) AS n, COALESCE(SUM(records_exposed),0) AS r FROM breaches WHERE EXTRACT(YEAR FROM breach_date) BETWEEN %s AND %s;",
                 (yr_min, yr_max))
 
         return {
@@ -237,10 +203,7 @@ class FilteredChartBuilder:
         df: pd.DataFrame,
         industries: List[str]
     ) -> go.Figure:
-        """
-        Multi-line breach trend chart - one line per industry when industries
-        are selected, single aggregate line otherwise.
-        """
+       
         if df.empty:
             return self._empty()
 
@@ -347,9 +310,7 @@ class FilteredChartBuilder:
         return fig
 
     def industry_community_chart(self) -> go.Figure:
-        """
-        Show industry community assignments as a grouped bar chart.
-        """
+        
         path = os.path.join(GRAPH_DIR, "industry_communities.csv")
         if not os.path.exists(path):
             return self._empty(
@@ -361,7 +322,7 @@ class FilteredChartBuilder:
         if df.empty:
             return self._empty("No community data found")
 
-        # assign a colour per community
+        
         community_colours = [
             COLOURS["primary"], COLOURS["secondary"], COLOURS["accent"],
             "purple", "green", "red", "orange"
