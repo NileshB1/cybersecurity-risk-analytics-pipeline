@@ -70,7 +70,7 @@ class FilterDataProvider:
             return pd.DataFrame()
 
     def get_year_range(self) -> Tuple[int, int]:
-        """It will get the min and max breach years for the year slider"""
+       
         df = self._query("SELECT EXTRACT(YEAR FROM breach_date)::INT AS yr FROM breaches WHERE breach_date IS NOT NULL;")
         if df.empty:
             return 2005, 2024
@@ -84,7 +84,7 @@ class FilterDataProvider:
         return [{"label": ind, "value": ind} for ind in df["industry"].tolist()]
 
     def get_severity_range(self) -> Tuple[float, float]:
-        """It will get the min and max severity scores for the slider"""
+       
         df = self._query("SELECT MIN(severity) AS mn, MAX(severity) AS mx FROM vulnerabilities WHERE severity IS NOT NULL;")
         if df.empty:
             return 0.0, 10.0
@@ -122,8 +122,7 @@ class FilteredDataLoader:
             # industry filter active
             industry_placeholders = ",".join(["%s"] * len(industries))
             sql = f"""SELECT EXTRACT(YEAR FROM breach_date)::INT AS year, industry, COUNT(*) AS breach_count,COALESCE(SUM(records_exposed), 0)   AS records_exposed
-                FROM breaches WHERE breach_date IS NOT NULL AND EXTRACT(YEAR FROM breach_date) BETWEEN %s AND %s
-                  AND industry IN ({industry_placeholders}) GROUP BY year, industry ORDER BY year;"""
+                FROM breaches WHERE breach_date IS NOT NULL AND EXTRACT(YEAR FROM breach_date) BETWEEN %s AND %s AND industry IN ({industry_placeholders}) GROUP BY year, industry ORDER BY year;"""
             params = tuple([yr_min, yr_max] + industries)
         else:
             sql = """SELECT EXTRACT(YEAR FROM breach_date)::INT AS year, industry, COUNT(*) AS breach_count, COALESCE(SUM(records_exposed), 0)   AS records_exposed
@@ -133,7 +132,7 @@ class FilteredDataLoader:
         return self._query(sql, params)
 
     def severity_filtered(self, min_severity: float) -> pd.DataFrame:
-        """CVE severity distribution above a threshold"""
+        
         return self._query(
             "SELECT severity, vendor, publish_date FROM vulnerabilities WHERE severity >= %s AND severity IS NOT NULL ORDER BY severity DESC;",
             (min_severity,)
@@ -143,7 +142,7 @@ class FilteredDataLoader:
         self, min_severity: float,
         industries:   List[str]
     ) -> pd.DataFrame:
-        """high risk vendor data with optional industry filter"""
+        
         
         path = os.path.join(ANALYSIS_DIR, "rq4_high_risk_vendors.csv")
         if not os.path.exists(path):
