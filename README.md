@@ -28,16 +28,15 @@ Modern enterprises face a constantly shifting cybersecurity landscape where the 
 
 ## Dashboard Preview
 
-> **![alt text](image.png)** : Full dashboard overview
+> **![alt text](image-9.png)** : Full dashboard overview
 
-> **![alt text](image-1.png)**
-> ** ![alt text](image-2.png)**
-> ** ![alt text](image-3.png) **
-> ** ![alt text](image-4.png) **
+> **![alt text](image-10.png) **
 
-> **![alt text](image-5.png)**
+> **![alt text](image-11.png)**
 
-> **![alt text](image-6.png)**
+> **![alt text](image-12.png)**
+
+> **![alt text](image-13.png)**
 
 ---
 
@@ -278,7 +277,7 @@ Open `http://localhost:3000` in your browser.
 - Go to **Lieage** tab
 - Click **Materialise All**
 - Watch each asset turn green: `read_mongo_raw` → `transform_data` → `load_to_postgres` → `run_analysis`
-![alt text](image-7.png)
+![alt text](image-8.png)
 
 The pipeline will:
 - Read raw records from MongoDB
