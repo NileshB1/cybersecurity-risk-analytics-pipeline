@@ -185,6 +185,20 @@ def fmt_number(n) -> str:
         return f"{n/1_000:.1f}K"
     return f"{n:,.0f}"
 
+# Dashboard showing "Unkwn" for all other industries, fixing issue with fun
+def rename_unknown(df: pd.DataFrame, col: str = "industry") -> pd.DataFrame:
+    # privacy rights clearinghouse uses Unknown/Bsr codes that look ugly on charts
+    if col not in df.columns:
+        return df
+    df = df.copy()
+    df[col] = df[col].replace({
+        "Unknown": "All Others",
+        "Unkn":    "All Others",
+        "unknown": "All Others",
+        "Bsr":     "Business / Services",
+    })
+    return df
+
 
 # lad CSVc
 
@@ -200,6 +214,8 @@ df_industry_enr=load_csv("extra_industry_summary.csv")
 df_top_products= load_csv("extra_top_products.csv")
 df_weapon_stats = load_csv("extra_weaponisation_summary.csv")
 
+df_a1 = rename_unknown(df_a1)
+df_breach_types = rename_unknown(df_breach_types, col="breach_type")
 
 # sidebar
 
@@ -219,10 +235,8 @@ with st.sidebar:
         yr_max = int(df_a2["year"].max())
 
     year_range = st.slider(
-        "Year Range",
-        min_value=yr_min,
-        max_value=yr_max,
-        value=(max(yr_min, 2015), yr_max),
+        "Year Range", min_value=yr_min,
+        max_value=yr_max, value=(max(yr_min, 2015), yr_max),
         step=1,
     )
 
@@ -287,7 +301,7 @@ st.markdown("""
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
 # total CVEs
-total_cves = df_a2["total_cves"].sum() if not df_a2.empty and "total_cves" in df_a2.columns else 0
+total_cves = df_a3["total_cves"].sum() if not df_a3.empty and "total_cves" in df_a3.columns else 0
 kpi1.markdown(f"""
 <div class="kpi-box" style="border-left-color: #1B3A6B;">
     <div class="kpi-label">Total CVEs (NVD)</div>
@@ -297,7 +311,7 @@ kpi1.markdown(f"""
 """, unsafe_allow_html=True)
 
 # exploited CVEs
-total_exploited = df_a4["exploited_cves"].sum() if not df_a4.empty and "exploited_cves" in df_a4.columns else 0
+total_exploited = df_a3["exploited_cves"].sum() if not df_a3.empty and "exploited_cves" in df_a3.columns else 0
 kpi2.markdown(f"""
 <div class="kpi-box" style="border-left-color: #C0392B;">
     <div class="kpi-label">Exploited (CISA KEV)</div>
@@ -322,7 +336,7 @@ kpi4.markdown(f"""
 <div class="kpi-box" style="border-left-color: #27AE60;">
     <div class="kpi-label">Records Exposed</div>
     <div class="kpi-value" style="color:#27AE60;">{fmt_number(total_records)}</div>
-    <div class="kpi-sub">Individual records compromised</div>
+    <div class="kpi-sub">All years incl. Yahoo 3B, LinkedIn 700M</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -345,48 +359,50 @@ else:
     col_left, col_right = st.columns(2)
 
     with col_left:
-        # horizontal bar — breach count by industry
+        # horizontal bar: breach count by industry
         df_plot = df_a1_f.sort_values("breach_count", ascending=True)
+        colour_map = {
+        "Healthcare":"#C39BD3", "All Others": "#A9DFBF",
+            "Financial Services": "#85C1E9", "Education": "#7FB3D3",
+        "Government/Military":"#5D8AA8", "Business/Other": "#82E0AA",
+        "Business/Services": "#82E0AA", "Non-Profit": "#A3C4BC",
+        }
+        bar_colours = [colour_map.get(ind, "#AED6F1") for ind in df_plot["industry"]]
         fig = go.Figure(go.Bar(
             x=df_plot["breach_count"],
             y=df_plot["industry"],
-            orientation="h",
-            marker=dict(
-                color=df_plot["breach_count"],
-                colorscale="Blues", showscale=False,
-            ),
+            orientation="h",  marker=dict(color=bar_colours),
             text=df_plot["breach_count"].apply(lambda x: f"{int(x):,}"),
-            textposition="outside",
-            hovertemplate="<b>%{y}</b><br>Breaches: %{x:,}<extra></extra>",
+            textposition="outside", hovertemplate="<b>%{y}</b><br>Breaches: %{x:,}<extra></extra>",
         ))
         fig.update_layout(
             title="Breach Count by Industry Sector",
-            xaxis_title="Number of Breaches",
-            yaxis_title="", template=PLOTLY_TEMPLATE,
+            xaxis_title="Number of Breaches",  yaxis_title="", template=PLOTLY_TEMPLATE,
             height=380,  margin=dict(l=10, r=60, t=45, b=10),
             font=dict(family="IBM Plex Sans"),
         )
         st.plotly_chart(fig, use_container_width=True)
 
     with col_right:
-        # treemap — records exposed by industry
+        # treemap: records exposed by industry
         df_plot2 = df_a1_f[df_a1_f["total_records_exposed"] > 0].copy()
+        df_plot2["records_fmt"] = df_plot2["total_records_exposed"].apply(
+                lambda x: f"{x/1e9:.1f}B" if x >= 1e9 else f"{x/1e6:.1f}M" if x >= 1e6 else f"{x/1e3:.0f}K"
+            )
         if not df_plot2.empty:
             fig2 = px.treemap(
-                df_plot2, path=["industry"],
-                values="total_records_exposed",
-                color="breach_count",   color_continuous_scale="RdBu_r",
-                title="Records Exposed by Sector (size = volume, colour = breach count)",
-                hover_data={"total_records_exposed": ":,"},
+                df_plot2, path=["industry"],values="total_records_exposed",
+                color="breach_count", color_continuous_scale="Purples",
+                title="Records Exposed by Sector",
+                custom_data=["records_fmt"],
             )
             fig2.update_layout(
-                template=PLOTLY_TEMPLATE,
-                height=380,
-                margin=dict(l=10, r=10, t=45, b=10),
+                template=PLOTLY_TEMPLATE, height=380, margin=dict(l=10, r=10, t=45, b=10),
                 font=dict(family="IBM Plex Sans"),
             )
             fig2.update_traces(
-                hovertemplate="<b>%{label}</b><br>Records: %{value:,}<extra></extra>"
+                hovertemplate="<b>%{label}</b><br>Records: %{customdata[0]}<extra></extra>",
+                texttemplate="%{label}<br>%{customdata[0]}",
             )
             st.plotly_chart(fig2, use_container_width=True)
 
@@ -406,18 +422,19 @@ else:
     # breach type breakdown if available
     if not df_breach_types.empty and "breach_type" in df_breach_types.columns:
         with st.expander("Breach Type Breakdown"):
-            fig_bt = px.bar(
-                df_breach_types.sort_values("incidents", ascending=False),
-                x="breach_type", y="incidents",
-                color="incidents", color_continuous_scale="Reds",
-                labels={"breach_type": "Breach Type", "incidents": "Incidents"},
-                title="Incidents by Breach Type",
-                text="incidents",
-            )
-            fig_bt.update_traces(textposition="outside")
-            fig_bt.update_layout(template=PLOTLY_TEMPLATE, height=320,
-                                  font=dict(family="IBM Plex Sans"),
-                                  coloraxis_showscale=False)
+            df_bt = df_breach_types.copy()
+            df_bt["breach_type"] = df_bt["breach_type"].replace({
+                "Unknown": "All Others", "UNKN": "All Others"
+            })
+            df_bt = df_bt.sort_values("incidents", ascending=False)
+
+            pastel = ["#C39BD3","#A9DFBF","#AED6F1","#F9E79F","#A3C4BC","#D5DBDB","#FAD7A0"]
+            fig_bt = go.Figure(go.Bar(
+                x=df_bt["breach_type"],  y=df_bt["incidents"],
+                marker=dict(color=pastel[:len(df_bt)]),
+                text=df_bt["incidents"].apply(lambda x: f"{int(x):,}"),
+                textposition="outside", hovertemplate="<b>%{x}</b><br>Incidents: %{y:,}<extra></extra>",
+            ))
             st.plotly_chart(fig_bt, use_container_width=True)
 
 
@@ -564,7 +581,7 @@ else:
     )
     df_a3 = df_a3.sort_values("severity_band")
 
-    col_l, col_r = st.columns(2)
+    col_l, = st.columns(1)
 
     with col_l:
         # grouped bar: total vs exploited
@@ -573,16 +590,17 @@ else:
             name="Total CVEs",
             x=df_a3["severity_band"],
             y=df_a3["total_cves"],
-            marker_color="#BDC3C7",
+            marker_color="#566573",
             hovertemplate="%{x}<br>Total: %{y:,}<extra></extra>",
         ))
         fig_sev.add_trace(go.Bar(
             name="Exploited CVEs",
             x=df_a3["severity_band"],
             y=df_a3["exploited_cves"],
-            marker_color=C["red"],
+            marker_color="#BFC9CA",
             hovertemplate="%{x}<br>Exploited: %{y:,}<extra></extra>",
         ))
+        
         fig_sev.update_layout(
             title="Total vs Exploited CVEs by Severity Band",
             xaxis_title="Severity Band",
@@ -592,26 +610,28 @@ else:
             height=360,
             legend=dict(orientation="h", y=-0.2),
             font=dict(family="IBM Plex Sans"),
-        )
+        ) 
         st.plotly_chart(fig_sev, use_container_width=True)
 
-    with col_r:
-        # funnel chart: exploitation rate by band
-        if "exploitation_rate_pct" in df_a3.columns:
-            fig_funnel = go.Figure(go.Funnel(
-                y=df_a3["severity_band"].astype(str),
-                x=df_a3["exploitation_rate_pct"],
-                textinfo="value+percent initial",
-                marker=dict(color=band_colours[:len(df_a3)]),
-                hovertemplate="%{y}<br>Rate: %{x:.2f}%<extra></extra>",
-            ))
-            fig_funnel.update_layout(
-                title="Exploitation Rate % by Severity Band",
-                template=PLOTLY_TEMPLATE,
-                height=360,
-                font=dict(family="IBM Plex Sans"),
-            )
-            st.plotly_chart(fig_funnel, use_container_width=True)
+    #TODO: Not needed this wizard for now. Visit this later
+    # with col_r:
+    #     # exploitation rate as a simple bar: easier to read than funnel
+    #     if "exploitation_rate_pct" in df_a3.columns:
+    #         rate_colours = [C["critical"], C["high"], C["medium"], C["low"], C["grey"]]
+    #         fig_rate = go.Figure(go.Bar(
+    #             x=df_a3["severity_band"].astype(str),
+    #             y=df_a3["exploitation_rate_pct"], marker=dict(color=rate_colours[:len(df_a3)]),
+    #             text=df_a3["exploitation_rate_pct"].apply(lambda x: f"{x:.1f}%"),
+    #             textposition="outside",   hovertemplate="%{x}<br>Rate: %{y:.2f}%<extra></extra>",
+    #         ))
+            
+    #         fig_rate.update_layout(
+    #             title="Exploitation Rate (%) by Severity Band",
+    #             xaxis_title="Severity Band",  yaxis_title="Rate (%)",
+    #             template=PLOTLY_TEMPLATE,
+    #             height=360, font=dict(family="IBM Plex Sans"),
+    #         )
+    #         st.plotly_chart(fig_rate, use_container_width=True)
 
     if "exploitation_rate_pct" in df_a3.columns and not df_a3.empty:
         top_band = df_a3.loc[df_a3["exploitation_rate_pct"].idxmax(), "severity_band"]
@@ -620,7 +640,7 @@ else:
         <div class="finding-card">
         <strong>Key Finding:</strong> <em>{top_band}</em> CVEs have the highest exploitation rate
         at <em>{top_rate:.2f}%</em>. This confirms that attackers systematically prioritise the most
-        severe vulnerabilities — patching Critical CVEs within days of disclosure is essential.
+        severe vulnerabilities: patching Critical CVEs within days of disclosure is essential.
         </div>
         """, unsafe_allow_html=True)
 
@@ -642,30 +662,26 @@ else:
     col_l, col_r = st.columns(2)
 
     with col_l:
-        top20 = df_a4.nlargest(15, "exploited_cves")
+        top20 = df_a4.nlargest(15, "exploited_cves").copy()
+        top20["avg_cvss_score"] = pd.to_numeric(top20["avg_cvss_score"], errors="coerce").fillna(0)
         fig_v = go.Figure(go.Bar(
             x=top20["exploited_cves"],
-            y=top20["vendor"],
-            orientation="h",
+            y=top20["vendor"], orientation="h",
             marker=dict(
                 color=top20["avg_cvss_score"],
-                colorscale="Reds",
-                showscale=True,
-                colorbar=dict(title="Avg CVSS", thickness=12),
+                colorscale=[[0, "#D5D8DC"], [1, "#2C3E50"]],
+                cmin=0, cmax=10,
+                showscale=True,   colorbar=dict(title="Avg CVSS", thickness=12),
             ),
             text=top20["exploited_cves"].apply(lambda x: f"{int(x):,}"),
             textposition="outside",
             hovertemplate="<b>%{y}</b><br>Exploited CVEs: %{x:,}<br>Avg CVSS: %{marker.color:.1f}<extra></extra>",
         ))
         fig_v.update_layout(
-            title="Top 15 Vendors — Exploited CVE Count<br><sup>(colour = avg CVSS severity)</sup>",
-            xaxis_title="Exploited CVE Count",
-            yaxis_title="",
-            template=PLOTLY_TEMPLATE,
-            height=420,
-            margin=dict(l=10, r=80, t=60, b=10),
-            yaxis={"categoryorder": "total ascending"},
-            font=dict(family="IBM Plex Sans"),
+            title="Top 15 Vendors: Exploited CVE Count<br><sup>(colour = avg CVSS severity)</sup>",
+            xaxis_title="Exploited CVE Count", yaxis_title="", template=PLOTLY_TEMPLATE,
+            height=420, margin=dict(l=10, r=80, t=60, b=10),
+            yaxis={"categoryorder": "total ascending"}, font=dict(family="IBM Plex Sans"),
         )
         st.plotly_chart(fig_v, use_container_width=True)
 
@@ -679,11 +695,11 @@ else:
                 text="vendor",
                 hover_data={
                     "vendor": True,  "exploited_cves": ":,",
-                    "avg_cvss_score": ":.2f",   "products_affected": True,
+                    "avg_cvss_score": ":.2f",  "products_affected": True,
                 },
                 labels={
                     "avg_cvss_score": "Average CVSS Score",  "exploited_cves":  "Exploited CVEs",
-                    "years_active":    "Years Active",
+                    "years_active": "Years Active",
                 },
                 title="Vendor Risk Landscape<br><sup>(size = products affected, colour = years active)</sup>",
             )
@@ -835,16 +851,11 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-
-# ═══════════════════════════════════════════════════════════════════════════════
 # Footer
-# ═══════════════════════════════════════════════════════════════════════════════
 
 st.markdown("---")
 st.markdown("""
 <p style='text-align:center; font-size:12px; color:#95A5A6;'>
     Cybersecurity Incident and Vulnerability Risk Analytics &nbsp;·&nbsp;
-    Nilesh Barge (25168304) &nbsp;·&nbsp; Shivakshi (24293113) &nbsp;·&nbsp; Teena (25141970) &nbsp;·&nbsp;
-    MS Data Analytics, National College of Ireland
 </p>
 """, unsafe_allow_html=True)
