@@ -32,7 +32,10 @@ class MongoWriter:
     Handles all MongoDB write operations for the consumer.
     """
 
-    BATCH_THRESHOLD = 1000     # flush every 1000 records per collection
+    # Batch flush threshold for writes. Default is 5000 to reduce flush
+    # frequency during large imports. Can be overridden with the
+    # environment variable `MONGO_BATCH_THRESHOLD` (int).
+    BATCH_THRESHOLD = int(os.getenv("MONGO_BATCH_THRESHOLD", "5000"))
 
     def __init__(self):
         self.logger = configure_logger("MongoWriter")

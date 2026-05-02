@@ -18,7 +18,7 @@ from dashboard.filter_callbacks import ( FilterDataProvider,FilteredDataLoader,F
 load_dotenv()
 
 ANALYSIS_DIR = "analysis/output"
-GRAPH_DIR    = "graph/output"
+GRAPH_DIR = "graph/output"
 
 COLOURS = { "primary":"steelblue",  "secondary":"tomato",   "accent":"mustard",   "grey": "grey",
     "dark":"darkblue",  "critical": "red",   "high": "orange",   "medium":"yellow",

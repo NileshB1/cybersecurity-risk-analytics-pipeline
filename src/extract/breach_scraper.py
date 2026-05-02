@@ -256,10 +256,16 @@ class BreachScraper(BaseExtractor):
     """
     
     Main scraper class responsible for fetching and publishing breach data.
+    
+    NOTE: This scraper currently expands the 1,000-row Tableau CSV to 50k records for pipeline testing.
+    For real distinct records from privacyrights.org, use the Playwright-based scrapers in
+    breach_scraper_playwright.py or breach_scraper_hybrid.py (requires Cloudflare Turnstile token handling).
     """
 
     DEFAULT_SLEEP_SEC = 2
     DEFAULT_MAX_PAGES = 100
+    DEFAULT_TARGET_RECORDS = 50_000  # Expanded from ~1k CSV to 50k for pipeline testing
+    DEFAULT_BATCH_SIZE = 5_000
 
     def __init__(
         self,
@@ -267,6 +273,8 @@ class BreachScraper(BaseExtractor):
         output_dir: str = ".",
         max_pages: int = DEFAULT_MAX_PAGES,
         sleep_sec: float = DEFAULT_SLEEP_SEC,
+        target_records: int = DEFAULT_TARGET_RECORDS,
+        batch_size: int = DEFAULT_BATCH_SIZE,
     ):
         super().__init__(kafka_producer=kafka_producer, output_dir=output_dir)
 
@@ -277,6 +285,8 @@ class BreachScraper(BaseExtractor):
 
         self._max_pages = max_pages
         self._sleep_sec = sleep_sec
+        self._target_records = target_records
+        self._batch_size = max(1, batch_size)
 
     @property
     def source_name(self):
@@ -288,7 +298,7 @@ class BreachScraper(BaseExtractor):
 
     def _fetch_records(self):
         """
-        Fetch records from the CSV export and yield them as a single batch.
+        Fetch records from the CSV export and yield them in batches.
         """
         raw_rows = self._fetcher.fetch_csv_records()
 
@@ -323,12 +333,54 @@ class BreachScraper(BaseExtractor):
                 ).strip(),
             })
 
-        if records:
+        if not records:
+            self._fetcher.close()
+            self.logger.info("Finished processing CSV batch.")
+            return
+
+        original_count = len(records)
+        if original_count < self._target_records:
+            records = self._expand_records(records, self._target_records)
+            self.logger.info(
+                f"Expanded breach source from {original_count:,} rows to "
+                f"{len(records):,} records for local analysis"
+            )
+        else:
             self.logger.info(f"Parsed {len(records):,} records from CSV")
-            yield records
+
+        for start in range(0, len(records), self._batch_size):
+            yield records[start : start + self._batch_size]
 
         self._fetcher.close()
         self.logger.info("Finished processing CSV batch.")
+
+    def _expand_records(
+        self,
+        records: List[Dict[str, Any]],
+        target_count: int,
+    ) -> List[Dict[str, Any]]:
+        """Repeat the source rows until the raw breach export reaches the target size."""
+        if len(records) >= target_count:
+            return records[:target_count]
+
+        expanded: List[Dict[str, Any]] = []
+        source_count = len(records)
+
+        for index in range(target_count):
+            source_record = records[index % source_count]
+            expanded_record = dict(source_record)
+            expanded_record["record_id"] = f"breach-{index + 1:06d}"
+            source_org = str(source_record.get("organisation", "")).strip()
+            expanded_record["source_organisation"] = source_org
+
+            if index >= source_count:
+                expanded_record["organisation"] = (
+                    f"{source_org} [synthetic {index + 1:06d}]"
+                )
+
+            expanded.append(expanded_record)
+
+        return expanded
 
     def _parse_record(self, raw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """

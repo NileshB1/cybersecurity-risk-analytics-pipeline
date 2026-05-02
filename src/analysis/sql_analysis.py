@@ -118,14 +118,20 @@ class QueryRunner:
         self._conn  = conn
 
     def run(self, label: str, sql: str) -> Optional[pd.DataFrame]:
-        """run a SQL query and return a DataFrame, or None on failure
-        """
         self.logger.info(f"#### Running query: {label}")
         try:
-            df = pd.read_sql(sql, self._conn)
+            with self._conn.cursor() as cur:
+                cur.execute(sql)
+                rows    = cur.fetchall()
+                columns = [desc[0] for desc in cur.description]
+            df = pd.DataFrame(rows, columns=columns)
             self.logger.info(f"#### {len(df):,} rows returned")
             return df
         except Exception as e:
+            # CRITICAL: must rollback after any failure
+            # otherwise PostgreSQL locks the entire connection
+            # and every subsequent query in this session also fails
+            self._conn.rollback()
             self.logger.error(f"Query failed [{label}], exception: {e}")
             return None
 
@@ -220,44 +226,45 @@ class ResearchQueryDefinitions:
                             WHEN v.severity >= 4.0 THEN 'Medium (4.0-6.9)'
                             WHEN v.severity >= 0.1 THEN 'Low (0.1-3.9)'
                             ELSE 'No Score'
-                        END                                     
-                        AS severity_band, b.industry, COUNT(DISTINCT v.cve_id) AS cve_count,
-                        COUNT(DISTINCT e.cve_id) AS exploited_count, COUNT(DISTINCT b.id) AS breach_count,
+                        END                             AS severity_band,
+                        COUNT(DISTINCT v.cve_id)        AS cve_count,
+                        COUNT(DISTINCT e.cve_id)        AS exploited_count,
                         ROUND(
                             COUNT(DISTINCT e.cve_id)::NUMERIC
                             / NULLIF(COUNT(DISTINCT v.cve_id), 0) * 100
-                        , 1) AS exploitation_rate_pct
+                        , 1)                            AS exploitation_rate_pct
                     FROM vulnerabilities v
                     LEFT JOIN exploited_vulnerabilities e ON v.cve_id = e.cve_id
-                    LEFT JOIN breaches b ON LOWER(b.industry) LIKE '%' || LOWER(v.vendor) || '%'
-                    WHERE b.industry IS NOT NULL AND b.industry != 'Unknown'
-                    GROUP BY severity_band, b.industry ORDER BY breach_count DESC, severity_band;
+                    WHERE v.severity IS NOT NULL
+                    GROUP BY severity_band
+                    ORDER BY MIN(v.severity) DESC;
                 """
             },
 
+            # TODO Need to check fix for RQ4 later
             
             # RQ4 - Which vendors are most associated with high severity vulnerabilities AND real breaches?
             # Combined risk rank using both CVSS avg and KEV count HAVING >= 5 filters out vendors with very few CVEs
             # otherwise random obscure vendors top the list
-            {
-                "label": "RQ4: High risk vendors",
-                "rq": "RQ4",
-                "filename": "rq4_high_risk_vendors.csv",
-                "sql": """
-                    SELECT v.vendor, COUNT(DISTINCT v.cve_id) AS total_cves,  ROUND(AVG(v.severity)::NUMERIC, 2) AS avg_cvss_score,
-                        COUNT(DISTINCT e.cve_id) AS confirmed_exploited,
-                        ROUND( COUNT(DISTINCT e.cve_id)::NUMERIC / NULLIF(COUNT(DISTINCT v.cve_id), 0) * 100
-                        , 1) AS exploitation_rate_pct,
-                        COUNT(DISTINCT b.id) AS linked_breaches
-                    FROM vulnerabilities v
-                    LEFT JOIN exploited_vulnerabilities e ON v.cve_id = e.cve_id
-                    LEFT JOIN breaches b ON LOWER(b.industry) LIKE '%' || LOWER(v.vendor) || '%'
-                              OR LOWER(v.vendor) LIKE '%' || LOWER(b.industry) || '%'
-                    WHERE v.vendor != 'Unknown' AND v.severity  IS NOT NULL
-                    GROUP BY v.vendor HAVING COUNT(DISTINCT v.cve_id) >= 5
-                    ORDER BY confirmed_exploited DESC, avg_cvss_score DESC LIMIT 25;
-                """
-            },
+            # {
+            #     "label": "RQ4: High risk vendors",
+            #     "rq": "RQ4",
+            #     "filename": "rq4_high_risk_vendors.csv",
+            #     "sql": """
+            #         SELECT
+            #             v.vendor, COUNT(DISTINCT v.cve_id) AS total_cves, ROUND(AVG(v.severity)::NUMERIC, 2) AS avg_cvss_score,
+            #             COUNT(DISTINCT e.cve_id) AS confirmed_exploited,
+            #             ROUND(COUNT(DISTINCT e.cve_id)::NUMERIC
+            #                 / NULLIF(COUNT(DISTINCT v.cve_id), 0) * 100
+            #             , 1)  AS exploitation_rate_pct
+            #         FROM vulnerabilities v  LEFT JOIN exploited_vulnerabilities e ON v.cve_id = e.cve_id
+            #         WHERE v.vendor   != 'Unknown'
+            #         AND v.severity IS NOT NULL
+            #         GROUP BY v.vendor HAVING COUNT(DISTINCT v.cve_id) >= 5
+            #         ORDER BY confirmed_exploited DESC, avg_cvss_score DESC LIMIT 25;
+            #     """
+            # },
+            
 
             # RQ5: What is the typical time gap between vulnerability disclosure and confirmed exploitation?
             # Simple date difference: exploitation_date - publish_date
@@ -271,10 +278,10 @@ class ResearchQueryDefinitions:
                         v.cve_id, v.vendor, v.severity,v.publish_date, e.exploitation_date,
                         (e.exploitation_date - v.publish_date) AS days_to_exploit,
                         CASE
-                            WHEN (e.exploitation_date - v.publish_date) <= 7 THEN '0-7 days'
+                            WHEN (e.exploitation_date-v.publish_date) <= 7 THEN '0-7 days'
                             WHEN (e.exploitation_date - v.publish_date) <= 30 THEN '8-30 days'
                             WHEN (e.exploitation_date - v.publish_date) <= 90 THEN '31-90 days'
-                            WHEN (e.exploitation_date - v.publish_date) <= 365 THEN '91-365 days'
+                            WHEN (e.exploitation_date-v.publish_date) <= 365 THEN '91-365 days'
                             ELSE 'Over 1 year'
                         END AS exploit_window
                     FROM vulnerabilities v

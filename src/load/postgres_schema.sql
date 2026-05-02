@@ -83,7 +83,7 @@ CREATE INDEX IF NOT EXISTS idx_breach_date ON breaches(breach_date);
 CREATE INDEX IF NOT EXISTS idx_breach_industry ON breaches(industry);
 CREATE INDEX IF NOT EXISTS idx_breach_org ON breaches(organisation);
 
--- composite index for RQ1 and RQ2 time + industry queries
+-- composite index
 CREATE INDEX IF NOT EXISTS idx_breach_industry_date ON breaches(industry, breach_date);
 
 -- to verify everything created run:

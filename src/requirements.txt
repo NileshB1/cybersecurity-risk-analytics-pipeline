@@ -43,3 +43,7 @@ zipp==3.23.1
 apache-airflow==2.5.0
 apache-airflow-providers-apache-kafka==2.0.0
 kafka-python==2.0.2
+# Optional: For real-scraping with Playwright (see SCRAPING_GUIDE.md)
+playwright==1.59.0
+dagster==1.13.3
+dagster-webserver==1.13.3

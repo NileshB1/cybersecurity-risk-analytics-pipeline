@@ -148,3 +148,6 @@ wirerope==1.0.0
 wrapt==2.1.2
 zipp==3.23.1
 ijson==3.5.0
+playwright==1.59.0
+dagster==1.13.3
+dagster-webserver==1.13.3
