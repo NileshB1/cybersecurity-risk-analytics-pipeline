@@ -8,7 +8,7 @@ read_mongo_raw
 3. load_to_postgres 
 4.run_analysis
 """
-
+import tempfile
 import os
 import sys
 import logging
@@ -19,6 +19,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+_TMP_DIR = tempfile.gettempdir()
+_CVE_TMP_PATH = os.path.join(_TMP_DIR, "dagster_clean_cves.json")
+_KEV_TMP_PATH= os.path.join(_TMP_DIR, "dagster_clean_kev.json")
+_BREACH_TMP_PATH = os.path.join(_TMP_DIR, "dagster_clean_breaches.json")
 
 def configure_logger(name: str) -> logging.Logger:
     logger = logging.getLogger(name)
@@ -93,40 +97,31 @@ def read_mongo_raw(context: AssetExecutionContext) -> Dict[str, int]:
     description="Clean and normalise raw MongoDB records using DataTransformer",
 )
 def transform_data(
-    context: AssetExecutionContext,
+    context:        AssetExecutionContext,
     read_mongo_raw: Dict[str, int],
-) -> Dict[str, str]:
-    """
-    Runs the full transformation pipeline
-    """
-    import json, tempfile
+) -> bool:
+    import json
 
     logger = configure_logger("asset.transform_data")
-    logger.info(f"Starting transform cve_raw={read_mongo_raw.get('cve_raw', 0):,} docs)")
+    logger.info(f"Starting transform (cve_raw={read_mongo_raw.get('cve_raw', 0):,} docs)")
 
     from transform.transformer import DataTransformer
     transformer = DataTransformer()
     clean_cves, clean_kev, clean_breaches = transformer.run()
 
-    context.log.info(f"Transform complete: CVE={len(clean_cves):,} KEV={len(clean_kev):,} Breach={len(clean_breaches):,}")
-
     if len(clean_cves) == 0:
-        raise Exception(
-            "Transformer returned 0 CVE records. Check MONGO_URI and MONGO_DB in .env.")
+        raise Exception("Transformer returned 0 CVE records")
 
-    #write to temp files
-    tmp_dir = tempfile.gettempdir()
-    paths = {
-        #TDOD 1, 2
-        "breach_path": os.path.join(tmp_dir, "dagster_clean_breaches.json"),
-    }
+    # write to fixed temp paths - no dict passing needed
+    with open(_CVE_TMP_PATH, "w") as f: json.dump(clean_cves,    f)
+    with open(_KEV_TMP_PATH,"w") as f: json.dump(clean_kev,     f)
+    with open(_BREACH_TMP_PATH,"w") as f: json.dump(clean_breaches,f)
 
-    ##TDOD 1, 2
-    with open(paths["breach_path"], "w") as f: json.dump(clean_breaches,f)
-
-    logger.info(f"Clean records saved to temp files in {tmp_dir}")
-    return paths
-
+    context.log.info(
+        f"Transform complete: CVE={len(clean_cves):,} KEV={len(clean_kev):,} Breach={len(clean_breaches)}"
+    )
+    context.log.info(f"Clean records written to {_TMP_DIR}")
+    return True
 
 
 # 3: load_to_postgres
@@ -138,23 +133,23 @@ def transform_data(
 )
 def load_to_postgres(
     context:       AssetExecutionContext,
-    transform_data: Dict[str, str],
+    transform_data: bool, 
 ) -> bool:
-    """
-    Loads cleaned records into PostgreSQL
-    """
     import json
 
     logger = configure_logger("asset.load_to_postgres")
-    logger.info(f"Loading clean records into PostgreSQL....")
 
-    # read temp files from previous asset
-    with open(transform_data["cve_path"]) as f: clean_cves= json.load(f)
-    with open(transform_data["kev_path"]) as f: clean_kev= json.load(f)
-    with open(transform_data["breach_path"]) as f: clean_breaches = json.load(f)
+    # read directly from fixed paths - no dict deserialisation
+    if not os.path.exists(_CVE_TMP_PATH):
+        raise Exception(f"Temp file not found: {_CVE_TMP_PATH}")
+
+    logger.info("Reading clean records from temp files...")
+    with open(_CVE_TMP_PATH) as f: clean_cves = json.load(f)
+    with open(_KEV_TMP_PATH) as f: clean_kev = json.load(f)
+    with open(_BREACH_TMP_PATH) as f: clean_breaches = json.load(f)
 
     context.log.info(
-        f"Loaded from temp files: CVE={len(clean_cves):,} KEV={len(clean_kev):,} Breach={len(clean_breaches)}"
+        f"Loaded from temp files: CVE={len(clean_cves):,} KEV={len(clean_kev):,} Breach={len(clean_breaches):}"
     )
 
     from load.postgres_loader import PostgresLoader
@@ -162,28 +157,22 @@ def load_to_postgres(
     success = loader.load_all(clean_cves, clean_kev, clean_breaches)
 
     if not success:
-        # warn but dont raise - partial load is better than no load
-        context.log.warning(f"PostgresLoader reported some failures. ")
+        context.log.warning("PostgresLoader reported some failures")
 
-    context.log.info(f"PostgreSQL load complete.... ha ha")
+    context.log.info("PostgreSQL load completed.... ha ha")
     return success
-
 
 
 # run_analysis
 
 @asset(
     group_name="cybersecurity_pipeline",
-    description="SQL analysis queries and export CSVs to analysis/output/",
+    description="Run RQ SQL analysis queries and export CSVs to analysis/output/",
 )
 def run_analysis(
-    context:        AssetExecutionContext,
-    load_to_postgres: bool,
+    context:          AssetExecutionContext,
+    load_to_postgres: bool,     # bool trigger - no change needed here
 ) -> bool:
-    """
-    Runs all five queries plus three extra
-    
-    """
     logger = configure_logger("asset.run_analysis")
     logger.info("Running SQL analysis queries....")
 
@@ -192,9 +181,8 @@ def run_analysis(
     success = runner.run_all()
 
     if success:
-        context.log.info(
-            "Analysis complete. CSVs saved to analysis/output/ ")
+        context.log.info(f"Analysis complete. CSVs in analysis/output/ ")
     else:
-        context.log.warning(f"Some analysis queries failed")
+        context.log.warning(f"Some queries failed. Dashboard may show empty panels")
 
     return success
