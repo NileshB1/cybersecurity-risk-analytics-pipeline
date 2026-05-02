@@ -365,6 +365,59 @@ LINE 22:                             WHEN v.severity >= 9.0 THEN 1
 2026-05-01 16:49:50  [INFO    ]  SqlAnalysisRunner  -  ==========================================
 2026-05-01 16:49:50  [INFO    ]  SqlAnalysisRunner  -  Analysis complete: CSVs saved to 'analysis/output/' (all OK)
 
+7.5 With changed queries(2-May)
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python analysis\sql_analysis.py
+2026-05-02 13:00:46  [INFO    ]  SqlAnalysisRunner  -  SqlAnalysisRunner starting....
+2026-05-02 13:00:46  [INFO    ]  DbConnection  -  #### DB connected for analysis queries
+2026-05-02 13:00:46  [INFO    ]  QueryRunner  -  #### Running query: Industry Impact Analysis
+2026-05-02 13:00:47  [INFO    ]  QueryRunner  -  #### 8 rows returned
+2026-05-02 13:00:47  [INFO    ]  CsvExporter  -  Saved -> analysis/output\a1_industry_impact.csv  (8 rows)
+2026-05-02 13:00:47  [INFO    ]  QueryRunner  -  #### Running query: Yearly Threat Landscape
+2026-05-02 13:00:47  [INFO    ]  QueryRunner  -  #### 15 rows returned
+2026-05-02 13:00:47  [INFO    ]  CsvExporter  -  Saved -> analysis/output\a2_yearly_threat_landscape.csv  (15 rows)
+2026-05-02 13:00:47  [INFO    ]  QueryRunner  -  #### Running query: Attack Severity Patterns
+2026-05-02 13:00:48  [INFO    ]  QueryRunner  -  #### 1 rows returned
+2026-05-02 13:00:48  [INFO    ]  CsvExporter  -  Saved -> analysis/output\a3_attack_severity_patterns.csv  (1 rows)
+2026-05-02 13:00:48  [INFO    ]  QueryRunner  -  #### Running query: Most Exploited Vendors
+2026-05-02 13:00:48  [INFO    ]  QueryRunner  -  #### 20 rows returned
+2026-05-02 13:00:48  [INFO    ]  CsvExporter  -  Saved -> analysis/output\a4_most_exploited_vendors.csv  (20 rows)
+2026-05-02 13:00:48  [INFO    ]  QueryRunner  -  #### Running query: Time to Weaponisation
+2026-05-02 13:00:48  [INFO    ]  QueryRunner  -  #### 1,033 rows returned
+2026-05-02 13:00:48  [INFO    ]  CsvExporter  -  Saved -> analysis/output\a5_time_to_weaponisation.csv  (1,033 rows)
+2026-05-02 13:00:48  [INFO    ]  QueryRunner  -  #### Running query: Breach type breakdown
+2026-05-02 13:00:48  [INFO    ]  QueryRunner  -  #### 7 rows returned
+2026-05-02 13:00:48  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_breach_types.csv  (7 rows)
+2026-05-02 13:00:48  [INFO    ]  QueryRunner  -  #### Running query: CVE monthly trend
+2026-05-02 13:00:48  [INFO    ]  QueryRunner  -  #### 196 rows returned
+2026-05-02 13:00:48  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_cve_monthly_volume.csv  (196 rows)
+2026-05-02 13:00:48  [INFO    ]  QueryRunner  -  #### Running query: Industry summary enriched
+2026-05-02 13:00:49  [INFO    ]  QueryRunner  -  #### 8 rows returned
+2026-05-02 13:00:49  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_industry_summary.csv  (8 rows)
+2026-05-02 13:00:49  [INFO    ]  QueryRunner  -  #### Running query: Top exploited products
+2026-05-02 13:00:49  [INFO    ]  QueryRunner  -  #### 25 rows returned
+2026-05-02 13:00:49  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_top_products.csv  (25 rows)
+2026-05-02 13:00:49  [INFO    ]  QueryRunner  -  #### Running query: Weaponisation speed summary
+2026-05-02 13:00:49  [INFO    ]  QueryRunner  -  #### 1 rows returned
+2026-05-02 13:00:49  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_weaponisation_summary.csv  (1 rows)
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -  ========================================
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -   SQL ANALYSIS RUN REPORT
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -  ==========================================
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -    Query                               RQ         Rows  Status
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -  ------------------------------------------
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -  Industry Impact Analysis            A1            8  OK
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -  Yearly Threat Landscape             A2           15  OK
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -  Attack Severity Patterns            A3            1  OK
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -  Most Exploited Vendors              A4           20  OK
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -  Time to Weaponisation               A5        1,033  OK
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -  Breach type breakdown               EXTRA         7  OK
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -  CVE monthly trend                   EXTRA       196  OK
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -  Industry summary enriched           EXTRA         8  OK
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -  Top exploited products              EXTRA        25  OK
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -  Weaponisation speed summary         EXTRA         1  OK
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -  ------------------------------------------
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -  10 passed   0 failed
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -  ==========================================
+2026-05-02 13:00:49  [INFO    ]  SqlAnalysisRunner  -  Analysis complete: CSVs saved to 'analysis/output/' (all OK)
 
 
 

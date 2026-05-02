@@ -336,29 +336,30 @@ class IndustrySummaryWriter:
         self._conn  = conn
 
     def rebuild(self) -> None:
-        """
-        Truncate and repopulate industry_summary by aggregating
-        the breaches table and joining to vulnerabilities for avg severity.
-
-        Doing it in pure SQL is much faster than reading into Python
-        and writing back, especially once we have 10k+ breach rows
-        """
-        self.logger.info("#### Rebuilding industry_summary table....")
+        self.logger.info("Rebuilding industry_summary table...")
 
         truncate_sql = "TRUNCATE TABLE industry_summary;"
 
-        # join breaches to vulnerabilities via vendor/industry to get severity
-        # the LOWER() on both sides handles casing mismatches between tables
-        # avg_severity will be NULL for industries with no matching CVEs - thats fine
         rebuild_sql = """
-            INSERT INTO industry_summary (industry, breach_count, total_records, avg_severity)
-            SELECT b.industry, COUNT(b.id) AS breach_count, COALESCE(SUM(b.records_exposed), 0) AS total_records,
-                ROUND(AVG(v.severity)::NUMERIC, 1) AS avg_severity
-            FROM breaches b
-            LEFT JOIN vulnerabilities v ON LOWER(v.vendor) = LOWER(b.industry)
-            WHERE b.industry IS NOT NULL AND b.industry != 'Unknown'
-            GROUP BY b.industry
-            ORDER BY breach_count DESC;
+            INSERT INTO industry_summary (
+                industry, breach_count, total_records,  avg_records_breach,
+                max_records, first_breach_year,  last_breach_year,
+                avg_severity
+            )
+            SELECT
+                b.industry,
+                COUNT(b.id) AS breach_count,  COALESCE(SUM(b.records_exposed), 0) AS total_records,
+                COALESCE(ROUND(AVG(b.records_exposed))::BIGINT, 0)  AS avg_records_breach,
+                COALESCE(MAX(b.records_exposed), 0) AS max_records, MIN(EXTRACT(YEAR FROM b.breach_date)::INT) AS first_breach_year,
+                MAX(EXTRACT(YEAR FROM b.breach_date)::INT) AS last_breach_year,
+                ROUND(
+                    (SELECT AVG(v.severity)
+                        FROM vulnerabilities v  WHERE v.severity IS NOT NULL
+                        LIMIT 1 )::NUMERIC
+                , 1)  AS avg_severity
+            FROM breaches b WHERE b.industry IS NOT NULL
+            AND b.industry != 'Unknown'
+            GROUP BY b.industry ORDER BY breach_count DESC;
         """
 
         try:
@@ -366,7 +367,7 @@ class IndustrySummaryWriter:
                 cur.execute(truncate_sql)
                 cur.execute(rebuild_sql)
             self._conn.commit()
-            self.logger.info("industry_summary rebuilt OK ....")
+            self.logger.info("industry_summary rebuilt OK")
         except psycopg2.Error as e:
             self._conn.rollback()
             self.logger.error(f"Failed to rebuild industry_summary: {e}")

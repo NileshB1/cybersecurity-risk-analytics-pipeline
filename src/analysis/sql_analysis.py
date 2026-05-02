@@ -167,191 +167,247 @@ class ResearchQueryDefinitions:
     @staticmethod
     def get_all() -> List[Dict[str, str]]:
         return [
-            # RQ1 - How do exploited vulnerabilities relate to breach patterns across industries and time?
-            # Left join breaches to KEV via vendor name match grouping by industry and year to see trends
+            # Analysis 1: Industry Impact
+            # which sectors get hit most and how bad is it
             {
-                "label": "RQ1: Industry breach trends",
-                "rq": "RQ1",
-                "filename": "rq1_industry_breach_trends.csv",
+                "label":    "Industry Impact Analysis",
+                "rq":       "A1",
+                "filename": "a1_industry_impact.csv",
                 "sql": """
-                    SELECT b.industry, EXTRACT(YEAR FROM b.breach_date)::INT AS breach_year,
-                        COUNT(DISTINCT b.id) AS breach_count, COUNT(DISTINCT e.cve_id)  AS exploited_cves_linked,
-                        COALESCE(SUM(b.records_exposed), 0) AS total_records_exposed
-                    FROM breaches b
-                    LEFT JOIN exploited_vulnerabilities e ON LOWER(e.vendor) = LOWER(b.industry)
-                    WHERE b.breach_date IS NOT NULL AND b.industry   IS NOT NULL  AND b.industry != 'Unknown'
-                    GROUP BY b.industry, breach_year
-                    ORDER BY breach_year DESC, breach_count DESC;
+                    SELECT industry, COUNT(id) AS breach_count,
+                    COALESCE(SUM(records_exposed), 0) AS total_records_exposed, COALESCE(ROUND(AVG(records_exposed)), 0) AS avg_per_breach,
+                        MAX(records_exposed) AS worst_single_breach, COUNT(DISTINCT organisation) AS organisations_hit,
+                        MIN(EXTRACT(YEAR FROM breach_date))::INT AS first_breach_year, MAX(EXTRACT(YEAR FROM breach_date))::INT AS latest_breach_year
+                    FROM breaches  WHERE industry    IS NOT NULL
+                      AND industry    != 'Unknown' AND breach_date IS NOT NULL
+                    GROUP BY industry  ORDER BY breach_count DESC;
                 """
             },
 
-            # RQ2 - Do breach counts increase in the period following disclosure of high severity CVEs?
-            # Looking at 30/60/90 day windows after each CVE severity >= 9 means Critical
+            ##TODO Need to improve
+            #### Analysis 2: Yearly Threat Landscape
+            # compares CVE publication volume to breach volume
+
             {
-                "label": "RQ2: Breach lag after CVE disclosure",
-                "rq": "RQ2",
-                "filename": "rq2_breach_lag_after_cve.csv",
+                "label":    "Yearly Threat Landscape",
+                "rq":       "A2",
+                "filename": "a2_yearly_threat_landscape.csv",
                 "sql": """
+                    WITH cve_yearly AS (
+                        SELECT  EXTRACT(YEAR FROM publish_date)::INT AS yr,COUNT(*) AS total_cves,
+                            COUNT(CASE WHEN severity >= 9  THEN 1 END) AS critical_count,
+                            COUNT(CASE WHEN severity >= 7 AND severity < 9  THEN 1 END) AS high_count,
+                            ROUND(AVG(severity)::NUMERIC, 2) AS avg_severity
+                        FROM vulnerabilities  WHERE publish_date IS NOT NULL
+                          AND EXTRACT(YEAR FROM publish_date) BETWEEN 2010 AND 2024 GROUP BY yr
+                    ),
+                    breach_yearly AS (SELECT
+                            EXTRACT(YEAR FROM breach_date)::INT AS yr, COUNT(*) AS total_breaches,
+                        COALESCE(SUM(records_exposed), 0)  AS records_exposed
+                        FROM breaches WHERE breach_date IS NOT NULL
+                          AND EXTRACT(YEAR FROM breach_date) BETWEEN 2010 AND 2024 GROUP BY yr
+                    )
                     SELECT
-                        v.cve_id, v.vendor, v.severity, v.publish_date, COUNT(CASE
-                            WHEN b.breach_date BETWEEN v.publish_date AND v.publish_date + INTERVAL '30 days'
-                            THEN 1 END
-                        ) AS breaches_within_30_days,
-                        COUNT(CASE
-                            WHEN b.breach_date BETWEEN v.publish_date AND v.publish_date + INTERVAL '60 days'
-                            THEN 1 END) AS breaches_within_60_days,
-                        COUNT(CASE
-                            WHEN b.breach_date BETWEEN v.publish_date AND v.publish_date + INTERVAL '90 days'
-                            THEN 1 END
-                        ) AS breaches_within_90_days
-                    FROM vulnerabilities v JOIN breaches b ON LOWER(b.industry) LIKE '%' || LOWER(v.vendor) || '%'
-                         OR LOWER(v.vendor) LIKE '%' || LOWER(b.industry) || '%' WHERE v.severity >= 9.0
-                      AND v.publish_date  IS NOT NULL  AND b.breach_date   IS NOT NULL
-                    GROUP BY v.cve_id, v.vendor, v.severity, v.publish_date
-                    HAVING COUNT(b.id) > 0  ORDER BY breaches_within_30_days DESC LIMIT 100;
+                        c.yr AS year,  c.total_cves, c.critical_count,
+                        c.high_count, c.avg_severity, COALESCE(b.total_breaches, 0) AS total_breaches,
+                        COALESCE(b.records_exposed, 0) AS total_records_exposed
+                    FROM cve_yearly c LEFT JOIN breach_yearly b ON c.yr = b.yr
+                    ORDER BY c.yr;
                 """
             },
 
-            # RQ3: Can severity scores predict breach risk across industries?
-            # Bucketing CVEs into severity bands and counting how many breach events are linked per band
-            {
-                "label": "RQ3: Severity vs breach rate",
-                "rq": "RQ3",
-                "filename": "rq3_severity_vs_breach_rate.csv",
-                "sql": """
-                    SELECT
-                        CASE
-                            WHEN v.severity >= 9.0 THEN 'Critical (9.0-10.0)'
-                            WHEN v.severity >= 7.0 THEN 'High (7.0-8.9)'
-                            WHEN v.severity >= 4.0 THEN 'Medium (4.0-6.9)'
-                            WHEN v.severity >= 0.1 THEN 'Low (0.1-3.9)'
-                            ELSE 'No Score'
-                        END                             AS severity_band,
-                        COUNT(DISTINCT v.cve_id)        AS cve_count,
-                        COUNT(DISTINCT e.cve_id)        AS exploited_count,
-                        ROUND(
-                            COUNT(DISTINCT e.cve_id)::NUMERIC
-                            / NULLIF(COUNT(DISTINCT v.cve_id), 0) * 100
-                        , 1)                            AS exploitation_rate_pct
-                    FROM vulnerabilities v
-                    LEFT JOIN exploited_vulnerabilities e ON v.cve_id = e.cve_id
-                    WHERE v.severity IS NOT NULL
-                    GROUP BY severity_band
-                    ORDER BY MIN(v.severity) DESC;
-                """
-            },
-
-            # TODO Need to check fix for RQ4 later
             
-            # RQ4 - Which vendors are most associated with high severity vulnerabilities AND real breaches?
-            # Combined risk rank using both CVSS avg and KEV count HAVING >= 5 filters out vendors with very few CVEs
-            # otherwise random obscure vendors top the list
-            # {
-            #     "label": "RQ4: High risk vendors",
-            #     "rq": "RQ4",
-            #     "filename": "rq4_high_risk_vendors.csv",
-            #     "sql": """
-            #         SELECT
-            #             v.vendor, COUNT(DISTINCT v.cve_id) AS total_cves, ROUND(AVG(v.severity)::NUMERIC, 2) AS avg_cvss_score,
-            #             COUNT(DISTINCT e.cve_id) AS confirmed_exploited,
-            #             ROUND(COUNT(DISTINCT e.cve_id)::NUMERIC
-            #                 / NULLIF(COUNT(DISTINCT v.cve_id), 0) * 100
-            #             , 1)  AS exploitation_rate_pct
-            #         FROM vulnerabilities v  LEFT JOIN exploited_vulnerabilities e ON v.cve_id = e.cve_id
-            #         WHERE v.vendor   != 'Unknown'
-            #         AND v.severity IS NOT NULL
-            #         GROUP BY v.vendor HAVING COUNT(DISTINCT v.cve_id) >= 5
-            #         ORDER BY confirmed_exploited DESC, avg_cvss_score DESC LIMIT 25;
-            #     """
-            # },
+            # Analysis 3: Attack Severity Patterns. do attackers prefer high severity CVEs?
             
-
-            # RQ5: What is the typical time gap between vulnerability disclosure and confirmed exploitation?
-            # Simple date difference: exploitation_date - publish_date
-            # negative values mean CISA listed it before NVD published which shouldnt happen but occasionally does with embargoed CVEs
             {
-                "label":    "RQ5: Time to exploit gap",
-                "rq":       "RQ5",
-                "filename": "rq5_time_to_exploit.csv",
+                "label":    "Attack Severity Patterns",
+                "rq":       "A3",
+                "filename": "a3_attack_severity_patterns.csv",
+                "sql": """
+                    WITH all_cves AS (
+                        SELECT
+                            CASE
+                                WHEN severity >= 9.0 THEN 'Critical (9-10)'
+                                WHEN severity >= 7.0 THEN 'High (7-8.9)'
+                                WHEN severity >= 4.0 THEN 'Medium (4-6.9)'
+                                WHEN severity >= 0.1 THEN 'Low (0.1-3.9)'
+                                ELSE 'No Score'
+                            END AS band,
+                            COUNT(*) AS total FROM vulnerabilities GROUP BY band
+                    ),
+                    exploited AS (
+                        SELECT
+                            CASE
+                                WHEN v.severity >= 9.0 THEN 'Critical (9-10)'
+                                WHEN v.severity >= 7.0 THEN 'High (7-8.9)'
+                                WHEN v.severity >= 4.0 THEN 'Medium (4-6.9)'
+                                WHEN v.severity >= 0.1 THEN 'Low (0.1-3.9)'
+                                ELSE                        'No Score'
+                            END AS band,
+                            COUNT(*) AS exploited_count FROM exploited_vulnerabilities e
+                        JOIN vulnerabilities v ON e.cve_id = v.cve_id GROUP BY band
+                    )
+                    SELECT
+                        a.band AS severity_band, a.total AS total_cves,
+                        COALESCE(ex.exploited_count, 0) AS exploited_cves,
+                        ROUND(COALESCE(ex.exploited_count, 0)::NUMERIC / NULLIF(a.total, 0) * 100
+                        , 2) AS exploitation_rate_pct,
+                        ROUND(100.0 - (COALESCE(ex.exploited_count, 0)::NUMERIC / NULLIF(a.total, 0) * 100)
+                        , 2) AS safe_rate_pct
+                    FROM all_cves a LEFT JOIN exploited ex ON a.band = ex.band
+                    ORDER BY
+                        CASE a.band
+                            WHEN 'Critical (9-10)' THEN 1
+                            WHEN 'High (7-8.9)'    THEN 2
+                            WHEN 'Medium (4-6.9)'  THEN 3
+                            WHEN 'Low (0.1-3.9)'   THEN 4
+                            ELSE 5
+                        END;
+                """
+            },
+
+        
+            # Analysis 4: Most Exploited Vendors. Which vendor software keeps getting exploited?
+            {
+                "label":    "Most Exploited Vendors",
+                "rq":       "A4",
+                "filename": "a4_most_exploited_vendors.csv",
                 "sql": """
                     SELECT
-                        v.cve_id, v.vendor, v.severity,v.publish_date, e.exploitation_date,
-                        (e.exploitation_date - v.publish_date) AS days_to_exploit,
+                        e.vendor,
+                        COUNT(DISTINCT e.cve_id) AS exploited_cves,
+                    COUNT(DISTINCT e.product) AS products_affected,
+                        ROUND(AVG(v.severity)::NUMERIC, 2) AS avg_cvss_score,
+                        MAX(v.severity)  AS highest_cvss,  MIN(e.exploitation_date) AS first_exploited,
+                    MAX(e.exploitation_date) AS most_recent_exploit,
+                    COUNT(DISTINCT  EXTRACT(YEAR FROM e.exploitation_date) )::INT AS years_active
+                    FROM exploited_vulnerabilities e LEFT JOIN vulnerabilities v ON e.cve_id = v.cve_id
+                    WHERE e.vendor IS NOT NULL AND e.vendor != '' AND e.vendor != 'Unknown'
+                    GROUP BY e.vendor  HAVING COUNT(DISTINCT e.cve_id) >= 3
+                    ORDER BY exploited_cves DESC  LIMIT 20;
+                """
+            },
+
+           
+            # Analysis 5: Time to Weaponisation
+            # How many days from NVD disclosure to first known
+           
+            {
+                "label":    "Time to Weaponisation",
+                "rq":       "A5",
+                "filename": "a5_time_to_weaponisation.csv",
+                "sql": """
+                    SELECT
+                        v.cve_id, v.vendor, v.severity,
+                        v.publish_date, e.exploitation_date, (e.exploitation_date - v.publish_date) AS days_to_exploit,
                         CASE
-                            WHEN (e.exploitation_date-v.publish_date) <= 7 THEN '0-7 days'
-                            WHEN (e.exploitation_date - v.publish_date) <= 30 THEN '8-30 days'
-                            WHEN (e.exploitation_date - v.publish_date) <= 90 THEN '31-90 days'
-                            WHEN (e.exploitation_date-v.publish_date) <= 365 THEN '91-365 days'
-                            ELSE 'Over 1 year'
-                        END AS exploit_window
-                    FROM vulnerabilities v
-                    JOIN exploited_vulnerabilities e ON v.cve_id = e.cve_id WHERE v.publish_date IS NOT NULL
-                      AND e.exploitation_date  IS NOT NULL AND e.exploitation_date  >= v.publish_date
+                            WHEN (e.exploitation_date - v.publish_date) <= 7
+                                THEN 'Within a week'
+                            WHEN (e.exploitation_date - v.publish_date) <= 30
+                                THEN 'Within a month'
+                            WHEN (e.exploitation_date - v.publish_date) <= 90
+                                THEN '1-3 months'
+                            WHEN (e.exploitation_date - v.publish_date) <= 365
+                                THEN '3-12 months'
+                            ELSE 'Over a year'
+                        END AS time_bracket
+                    FROM vulnerabilities v  JOIN exploited_vulnerabilities e
+                      ON v.cve_id = e.cve_id WHERE v.publish_date IS NOT NULL
+                      AND e.exploitation_date IS NOT NULL AND e.exploitation_date >= v.publish_date
                     ORDER BY days_to_exploit ASC;
                 """
             },
         ]
 
+
     @staticmethod
     def get_extra() -> List[Dict[str, str]]:
-        """
-            Extra queries not in the RQ list but useful for the dashboard.
-            Added these after looking at what Shivakshi needed for the charts.
-        """
-        return [
 
-            # monthly CVE volume over time, line chart in dashboard
+        return [
+            # breach type breakdown - what kind of breaches happen most
+            # HACK, PHYS, PORT, DISC are PRC breach type codes
             {
-                "label": "CVE volume by month",
+                "label": "Breach type breakdown",
                 "rq": "EXTRA",
+                "filename": "extra_breach_types.csv",
+                "sql": """
+                    SELECT breach_type, COUNT(*)  AS incidents,
+                        COALESCE(SUM(records_exposed), 0)   AS total_records,
+                        COUNT(DISTINCT industry) AS industries_affected
+                    FROM breaches  WHERE breach_type IS NOT NULL
+                      AND breach_type != '' GROUP BY breach_type  ORDER BY incidents DESC;
+                """
+            },
+
+            # monthly CVE publication trend for the line chart
+            {
+                "label": "CVE monthly trend",
+                "rq":"EXTRA",
                 "filename": "extra_cve_monthly_volume.csv",
                 "sql": """
-                    SELECT
-                        DATE_TRUNC('month', publish_date) AS month, COUNT(*)  AS cve_count,
-                        COUNT(CASE WHEN severity >= 9 THEN 1 END) AS critical_count,
-                        COUNT(CASE WHEN severity >= 7 AND severity < 9 THEN 1 END)  AS high_count
-                    FROM vulnerabilities WHERE publish_date IS NOT NULL
-                      AND publish_date >= '2015-01-01' GROUP BY month ORDER BY month;
+                    SELECT DATE_TRUNC('month', publish_date) AS month, COUNT(*) AS cve_count, COUNT(CASE WHEN severity >= 9 THEN 1 END) AS critical_count,
+                        COUNT(CASE WHEN severity >= 7 AND severity < 9 THEN 1 END)    AS high_count
+                    FROM vulnerabilities  WHERE publish_date IS NOT NULL
+                      AND publish_date >= '2010-01-01'
+                    GROUP BY month  ORDER BY month;
                 """
             },
 
-            # top 10 industries by total records exposed, bar chart
+            # industry summary richer version for the KPI tiles
             {
-                "label": "Top industries by records exposed",
+                "label": "Industry summary enriched",
                 "rq": "EXTRA",
-                "filename": "extra_top_industries_records.csv",
+                "filename": "extra_industry_summary.csv",
                 "sql": """
-                    SELECT
-                        industry,
-                        COUNT(*) AS breach_count,
-                        SUM(records_exposed) AS total_records_exposed,
-                        ROUND(AVG(records_exposed)) AS avg_per_breach
-                    FROM breaches
-                    WHERE industry IS NOT NULL AND industry != 'Unknown'
-                      AND records_exposed IS NOT NULL GROUP BY industry
-                    ORDER BY total_records_exposed DESC LIMIT 10;
+                    SELECT industry, COUNT(id) AS breach_count, COALESCE(SUM(records_exposed), 0) AS total_records,
+                ROUND(AVG(records_exposed))::BIGINT AS avg_per_breach, MAX(records_exposed) AS biggest_breach,
+                        COUNT(DISTINCT organisation) AS unique_orgs, MIN(EXTRACT(YEAR FROM breach_date))::INT AS from_year,
+                        MAX(EXTRACT(YEAR FROM breach_date))::INT AS to_year
+                    FROM breaches WHERE industry    IS NOT NULL
+                      AND industry != 'Unknown' AND breach_date IS NOT NULL
+                    GROUP BY industry ORDER BY breach_count DESC;
                 """
             },
 
-            # RQ5 summary stats: mean/median/min/max days to exploit
+            # top exploited products for the vendor drill-down panel
             {
-                "label": "RQ5 summary statistics",
+                "label":"Top exploited products",
                 "rq": "EXTRA",
-                "filename": "extra_rq5_exploit_stats.csv",
+                "filename": "extra_top_products.csv",
                 "sql": """
                     SELECT
-                        COUNT(*) AS total_pairs,
-                        ROUND(AVG(e.exploitation_date - v.publish_date))  AS avg_days,
-                        PERCENTILE_CONT(0.5) WITHIN GROUP (
-                            ORDER BY (e.exploitation_date - v.publish_date))::INT  AS median_days,
-                        MIN(e.exploitation_date - v.publish_date) AS min_days, MAX(e.exploitation_date - v.publish_date) as max_days
-                    FROM vulnerabilities v JOIN exploited_vulnerabilities e ON v.cve_id = e.cve_id
-                    WHERE v.publish_date IS NOT NULL
-                      AND e.exploitation_date IS NOT NULL AND e.exploitation_date >= v.publish_date;
+                        e.vendor, e.product, COUNT(DISTINCT e.cve_id)  AS exploited_count,
+                ROUND(AVG(v.severity)::NUMERIC, 2) AS avg_cvss,
+                        MIN(e.exploitation_date) AS first_seen,  MAX(e.exploitation_date) AS last_seen
+                    FROM exploited_vulnerabilities e LEFT JOIN vulnerabilities v ON e.cve_id = v.cve_id
+                    WHERE e.product IS NOT NULL AND e.product != ''
+                      AND e.product != 'Unknown'  GROUP BY e.vendor, e.product
+                    HAVING COUNT(DISTINCT e.cve_id) >= 2 ORDER BY exploited_count DESC LIMIT 25;
+                """
+            },
+
+            # time to weaponisation summary stats for the stat cards
+            {
+                "label":    "Weaponisation speed summary",
+                "rq":       "EXTRA",
+                "filename": "extra_weaponisation_summary.csv",
+                "sql": """
+                    SELECT COUNT(*)  AS total_matched, ROUND(AVG(e.exploitation_date - v.publish_date)) AS avg_days,
+                        PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY (e.exploitation_date - v.publish_date))::INT AS median_days,
+                    MIN(e.exploitation_date - v.publish_date) AS fastest_days,  MAX(e.exploitation_date - v.publish_date) AS slowest_days,
+                        COUNT(CASE WHEN (e.exploitation_date - v.publish_date) <= 7
+                              THEN 1 END)    AS within_7_days,
+                        COUNT(CASE WHEN (e.exploitation_date - v.publish_date) <= 30
+                              THEN 1 END) AS within_30_days,
+                        ROUND(COUNT(CASE WHEN (e.exploitation_date - v.publish_date) <= 30
+                                  THEN 1 END)::NUMERIC / NULLIF(COUNT(*), 0) * 100
+                        , 1)    AS pct_within_30
+                    FROM vulnerabilities v  JOIN exploited_vulnerabilities e ON v.cve_id = e.cve_id
+                    WHERE v.publish_date  IS NOT NULL  AND e.exploitation_date IS NOT NULL
+                      AND e.exploitation_date >= v.publish_date;
                 """
             },
         ]
-
 
 
 # AnalysisRunReport

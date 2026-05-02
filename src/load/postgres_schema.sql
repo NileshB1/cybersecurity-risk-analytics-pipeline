@@ -58,15 +58,17 @@ CREATE TABLE IF NOT EXISTS breaches (
 -- TABLE 4 : industry_summary
 -- pre-aggregated - refreshed on every pipeline run
 
-
 CREATE TABLE IF NOT EXISTS industry_summary (
     industry VARCHAR(255) PRIMARY KEY,
     breach_count INT DEFAULT 0,
     total_records BIGINT DEFAULT 0,
-    avg_severity  NUMERIC(4,1),
+    avg_records_breach  BIGINT DEFAULT 0,
+    max_records BIGINT DEFAULT 0,
+    first_breach_year  INT,
+    last_breach_year INT,
+    avg_severity NUMERIC(4,1),
     updated_at TIMESTAMP DEFAULT NOW()
 );
-
 
 
 -- INDEXES
