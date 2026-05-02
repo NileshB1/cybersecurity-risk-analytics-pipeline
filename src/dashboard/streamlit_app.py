@@ -21,7 +21,9 @@ import streamlit as st
 
 st.set_page_config(
     page_title="Cybersecurity Risk Analytics | Group E",
-    page_icon="🔐", layout="wide", initial_sidebar_state="expanded",
+    page_icon="🔐",
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
 
 
@@ -49,17 +51,17 @@ st.markdown("""
         font-family: 'IBM Plex Sans', sans-serif;
     }
 
-    /* header bar */
+    /* header bar. Light green for now */
     .main-header {
-        background: linear-gradient(135deg, #1B3A6B 0%, #0D2240 100%);
+        background: linear-gradient(135deg, #E6E6FA 0%, #D8B4F8 100%);
         padding: 20px 32px;
         border-radius: 12px;
         margin-bottom: 24px;
         border-left: 5px solid #E74C3C;
     }
     .main-header h1 {
-        color: white;
-        font-size: 28px;
+        color: black;
+        font-size: 32px;
         font-weight: 700;
         margin: 0;
         letter-spacing: -0.5px;
@@ -131,18 +133,19 @@ st.markdown("""
         line-height: 1.5;
     }
 
-    /* sidebar */
+    /* sidebar: Grey color and Black text */
     [data-testid="stSidebar"] {
-        background: #0D2240;
+        background: #E6E6FA 0%, #D8B4F8 100%;
     }
     [data-testid="stSidebar"] * {
-        color: white !important;
+        color: black !important;
     }
 
     /* hide streamlit branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
+    header {visibility: visible;}
+    [data-testid="stToolbar"] {visibility: hidden;}
 
     /* plotly chart border */
     .js-plotly-plot {
@@ -273,7 +276,7 @@ df_a2_f = filter_by_year(df_a2)
 st.markdown("""
 <div class="main-header">
     <h1>🔐 Cybersecurity Risk Analytics Dashboard</h1>
-    <p>Group E &nbsp;·&nbsp; MS Data Analytics &nbsp;·&nbsp; National College of Ireland &nbsp;·&nbsp;
+    <p><!-- Group E &nbsp;·&nbsp; MS Data Analytics &nbsp;·&nbsp; National College of Ireland &nbsp;·&nbsp; -->
     Sources: NIST NVD &nbsp;|&nbsp; CISA KEV &nbsp;|&nbsp; Privacy Rights Clearinghouse</p>
 </div>
 """, unsafe_allow_html=True)

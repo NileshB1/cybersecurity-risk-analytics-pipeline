@@ -811,3 +811,103 @@ D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Proje
   df = pd.read_sql(sql, conn)
 2026-05-01 17:21:50  [INFO    ]  FilterManager  -  All filter callbacks registered
 2026-05-01 17:21:50  [INFO    ]  RQDashboardApp  -  Dashboard ready at http://localhost:8050
+
+
+###################################################################################Dashboard (2-May)
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python analysis\sql_analysis.py
+2026-05-02 13:31:11  [INFO    ]  SqlAnalysisRunner  -  SqlAnalysisRunner starting....
+2026-05-02 13:31:11  [INFO    ]  DbConnection  -  #### DB connected for analysis queries
+2026-05-02 13:31:11  [INFO    ]  QueryRunner  -  #### Running query: Industry Impact Analysis
+2026-05-02 13:31:12  [INFO    ]  QueryRunner  -  #### 8 rows returned
+2026-05-02 13:31:12  [INFO    ]  CsvExporter  -  Saved -> analysis/output\a1_industry_impact.csv  (8 rows)
+2026-05-02 13:31:12  [INFO    ]  QueryRunner  -  #### Running query: Yearly Threat Landscape
+2026-05-02 13:31:12  [INFO    ]  QueryRunner  -  #### 15 rows returned
+2026-05-02 13:31:12  [INFO    ]  CsvExporter  -  Saved -> analysis/output\a2_yearly_threat_landscape.csv  (15 rows)
+2026-05-02 13:31:12  [INFO    ]  QueryRunner  -  #### Running query: Attack Severity Patterns
+2026-05-02 13:31:13  [INFO    ]  QueryRunner  -  #### 1 rows returned
+2026-05-02 13:31:13  [INFO    ]  CsvExporter  -  Saved -> analysis/output\a3_attack_severity_patterns.csv  (1 rows)
+2026-05-02 13:31:13  [INFO    ]  QueryRunner  -  #### Running query: Most Exploited Vendors
+2026-05-02 13:31:13  [INFO    ]  QueryRunner  -  #### 20 rows returned
+2026-05-02 13:31:13  [INFO    ]  CsvExporter  -  Saved -> analysis/output\a4_most_exploited_vendors.csv  (20 rows)
+2026-05-02 13:31:13  [INFO    ]  QueryRunner  -  #### Running query: Time to Weaponisation
+2026-05-02 13:31:14  [INFO    ]  QueryRunner  -  #### 1,033 rows returned
+2026-05-02 13:31:14  [INFO    ]  CsvExporter  -  Saved -> analysis/output\a5_time_to_weaponisation.csv  (1,033 rows)
+2026-05-02 13:31:14  [INFO    ]  QueryRunner  -  #### Running query: Breach type breakdown
+2026-05-02 13:31:14  [INFO    ]  QueryRunner  -  #### 7 rows returned
+2026-05-02 13:31:14  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_breach_types.csv  (7 rows)
+2026-05-02 13:31:14  [INFO    ]  QueryRunner  -  #### Running query: CVE monthly trend
+2026-05-02 13:31:14  [INFO    ]  QueryRunner  -  #### 196 rows returned
+2026-05-02 13:31:14  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_cve_monthly_volume.csv  (196 rows)
+2026-05-02 13:31:14  [INFO    ]  QueryRunner  -  #### Running query: Industry summary enriched
+2026-05-02 13:31:14  [INFO    ]  QueryRunner  -  #### 8 rows returned
+2026-05-02 13:31:14  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_industry_summary.csv  (8 rows)
+2026-05-02 13:31:14  [INFO    ]  QueryRunner  -  #### Running query: Top exploited products
+2026-05-02 13:31:14  [INFO    ]  QueryRunner  -  #### 25 rows returned
+2026-05-02 13:31:14  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_top_products.csv  (25 rows)
+2026-05-02 13:31:14  [INFO    ]  QueryRunner  -  #### Running query: Weaponisation speed summary
+2026-05-02 13:31:15  [INFO    ]  QueryRunner  -  #### 1 rows returned
+2026-05-02 13:31:15  [INFO    ]  CsvExporter  -  Saved -> analysis/output\extra_weaponisation_summary.csv  (1 rows)
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -  ========================================
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -   SQL ANALYSIS RUN REPORT
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -  ==========================================
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -    Query                               RQ         Rows  Status
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -  ------------------------------------------
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -  Industry Impact Analysis            A1            8  OK
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -  Yearly Threat Landscape             A2           15  OK
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -  Attack Severity Patterns            A3            1  OK
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -  Most Exploited Vendors              A4           20  OK
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -  Time to Weaponisation               A5        1,033  OK
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -  Breach type breakdown               EXTRA         7  OK
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -  CVE monthly trend                   EXTRA       196  OK
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -  Industry summary enriched           EXTRA         8  OK
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -  Top exploited products              EXTRA        25  OK
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -  Weaponisation speed summary         EXTRA         1  OK
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -  ------------------------------------------
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -  10 passed   0 failed
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -  ==========================================
+2026-05-02 13:31:15  [INFO    ]  SqlAnalysisRunner  -  Analysis complete: CSVs saved to 'analysis/output/' (all OK)
+
+===============================================================================================
+
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>python analysis\report_charts.py
+
+Generating report figures: analysis/report_figures/
+
+  Generating: Figure 1: Industry Breach Count
+  Loaded a1_industry_impact.csv: 8 rows
+  Saved -> analysis/report_figures\fig1_industry_breach_count.png
+  Generating: Figure 2: Records Exposed by Sector
+  Loaded a1_industry_impact.csv: 8 rows
+  Saved -> analysis/report_figures\fig2_records_exposed_by_sector.png
+  Generating: Figure 3: CVE Volume Yearly
+  Loaded a2_yearly_threat_landscape.csv: 15 rows
+  Saved -> analysis/report_figures\fig3_cve_volume_yearly.png
+  Generating: Figure 4: CVE vs Breach Frequency
+  Loaded a2_yearly_threat_landscape.csv: 15 rows
+  Saved -> analysis/report_figures\fig4_cve_vs_breach_yearly.png
+  Generating: Figure 5: Exploitation Rate
+  Loaded a3_attack_severity_patterns.csv: 1 rows
+  Saved -> analysis/report_figures\fig5_exploitation_rate_by_severity.png
+  Generating: Figure 6: Top Exploited Vendors
+  Loaded a4_most_exploited_vendors.csv: 20 rows
+  Saved -> analysis/report_figures\fig6_top_exploited_vendors.png
+  Generating: Figure 7: Time to Weaponisation
+  Loaded a5_time_to_weaponisation.csv: 1,033 rows
+  Saved -> analysis/report_figures\fig7_time_to_weaponisation.png
+  Generating: Figure 8: Severity Heatmap
+  Loaded a2_yearly_threat_landscape.csv: 15 rows
+  Saved -> analysis/report_figures\fig8_severity_heatmap.png
+
+Done: 8 figures saved, 0 failed
+Output folder: D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src\analysis\report_figures
+
+
+#
+
+(.venv) D:\NCI\DataAnalytics\Projects\Analytics Programming and Data Visualisation Project-Sem1\cybersecurity_analytics\src>streamlit run dashboard\streamlit_app.py
+2026-05-02 13:41:57.704 Uvicorn server started on 0.0.0.0:8501
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8501
+  Network URL: http://192.168.0.233:8501
