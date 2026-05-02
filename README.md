@@ -180,7 +180,7 @@ NVD_API_KEY=your_key_here
 
 ## How to Run — End to End
 
-### Step 1 — Verify connections
+### Step 1: Verify connections
 
 Before running anything, confirm all services are reachable:
 
@@ -193,7 +193,7 @@ All five checks (MongoDB, PostgreSQL, NVD API, CISA KEV, Privacy Rights site) sh
 
 ---
 
-### Step 2 — Start Kafka
+### Step 2: Start Kafka
 
 Open two separate terminals and keep them running throughout the entire pipeline.
 
