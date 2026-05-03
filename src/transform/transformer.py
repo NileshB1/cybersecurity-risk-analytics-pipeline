@@ -1,7 +1,4 @@
-"""
-Reads raw records from MongoDB (the output of the Kafka consumer), applies
-the full cleaning and normalisation pipeline, and returns three clean
-lists of records ready for PostgreSQL insertion."""
+"""Reads raw records from MongoDB, appliesthe full cleaning and normalisation pipeline, and returns three clean lists of records ready for PostgreSQL insertion."""
 
 import os
 import re
@@ -14,7 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import pymongo
 from dotenv import load_dotenv
 
-from transform.date_parser       import DateParser
+from transform.date_parser import DateParser
 from transform.vendor_normaliser import VendorNormaliser
 
 load_dotenv()
@@ -25,10 +22,8 @@ def configure_logger(name: str) -> logging.Logger:
     
     logger.setLevel(logging.DEBUG)
 
-    fmt = logging.Formatter(
-        fmt="%(asctime)s  [%(levelname)-8s]  %(name)s  —  %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
-    )
+    fmt = logging.Formatter(fmt="%(asctime)s  [%(levelname)-8s]  %(name)s  —  %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S")
 
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.INFO)
@@ -42,109 +37,49 @@ def configure_logger(name: str) -> logging.Logger:
 
     return logger
 
-
-
 # MongoDB Raw Reader
 class MongoRawReader:
-    """
-    Reads raw records from MongoDB collections into Python lists.
-    """
+    """Reads raw records from MongoDB collections into Python lists. """
 
     def __init__(self):
         self.logger = configure_logger("MongoRawReader")
-        self._client = pymongo.MongoClient(
-            os.getenv("MONGO_URI", "mongodb://localhost:27017"),
-            serverSelectionTimeoutMS=5000
-        )
+        self._client = pymongo.MongoClient(os.getenv("MONGO_URI", "mongodb://localhost:27017"), serverSelectionTimeoutMS=5000 )
         
         self._db = self._client[os.getenv("MONGO_DB", "cybersec_db")]
 
     def read_collection(self, collection_name: str) -> List[Dict[str, Any]]:
-        """
-        Read all documents from one MongoDB collection.
-        
-        """
+        """Read all documents from one MongoDB collection."""
+
         self.logger.info(f"Reading MongoDB collection: '{collection_name}'")
         try:
             records = list(self._db[collection_name].find({}, {"_id": 0}))
-            self.logger.info(f"  {len(records):,} documents read from '{collection_name}'")
+            self.logger.info(f"{len(records):,} documents read from '{collection_name}'")
             return records
         except pymongo.errors.PyMongoError as exc:
             self.logger.error(f"MongoDB read error on '{collection_name}': {exc}")
             return []
 
     def read_all(self) -> Tuple[List, List, List]:
-        """Read all three raw collections and return them as a tuple."""
-        cve_records    = self.read_collection("cve_raw")
-        kev_records    = self.read_collection("kev_raw")
+        cve_records = self.read_collection("cve_raw")
+        kev_records = self.read_collection("kev_raw")
         breach_records = self.read_collection("breach_raw")
         return cve_records, kev_records, breach_records
 
     def close(self) -> None:
         self._client.close()
         self.logger.debug("MongoRawReader connection closed.")
-
-
-
-# Industry Mapper
-
-
 class IndustryMapper:
-    """
-    Converts Privacy Rights Clearinghouse sector codes and free-text
+    """ Converts Privacy Rights Clearinghouse sector codes and free-text
     strings to human-readable industry labels used in PostgreSQL
-    and the Plotly dashboard.
+    and the Plotly dashboard"""
 
-    """
+    CODE_MAP: Dict[str, str] = {"MED": "Healthcare","BSF": "Financial Services","BSO":"Business / Other","EDU":"Education","GOV":"Government / Military","NGO":"Non-Profit", "RET": "Retail", "TEC": "Technology", "TECH": "Technology", "INS": "Insurance","LEG": "Legal","ENE": "Energy / Utilities","TRA": "Transportation","HOS": "Hospitality","MFG":"Manufacturing",}
 
-    # Official Privacy Rights Clearinghouse sector codes
-    CODE_MAP: Dict[str, str] = {
-        "MED": "Healthcare",
-        "BSF": "Financial Services",
-        "BSO":"Business / Other",
-        "EDU":"Education",
-        "GOV":"Government / Military",
-        "NGO":"Non-Profit",
-        "RET": "Retail",
-        "TEC": "Technology",
-        "TECH": "Technology",
-        "INS": "Insurance",
-        "LEG": "Legal",
-        "ENE": "Energy / Utilities",
-        "TRA": "Transportation",
-        "HOS": "Hospitality",
-        "MFG":"Manufacturing",
-    }
-
-    KEYWORD_MAP: Dict[str, str] = {
-        "health":"Healthcare",
-        "hospital": "Healthcare",
-        "medical": "Healthcare",
-        "clinic": "Healthcare",
-        "pharma": "Healthcare",
-        "bank":"Financial Services",
-        "financial": "Financial Services",
-        "finance":"Financial Services",
-        "insurance": "Insurance",
-        "credit":"Financial Services",
-        "school": "Education",
-        "university": "Education",
-        "college": "Education",
-        "education": "Education",
-        "government": "Government / Military",
-        "federal":    "Government / Military",
-        "retail": "Retail",
-        "store": "Retail",
-        "tech": "Technology",
-        "software": "Technology",
-        "telecom":"Technology",
-        "military": "Government / Military",
-    }
+    KEYWORD_MAP: Dict[str, str] = { "health":"Healthcare", "hospital": "Healthcare", "medical": "Healthcare","clinic": "Healthcare","pharma": "Healthcare","bank":"Financial Services", "financial": "Financial Services", "finance":"Financial Services", "insurance": "Insurance","credit":"Financial Services","school": "Education","university": "Education","college": "Education","education": "Education","government": "Government / Military","federal":    "Government / Military","retail": "Retail","store": "Retail","tech": "Technology","software": "Technology","telecom":"Technology","military": "Government / Military",}
 
     @classmethod
     def map(cls, raw: Optional[str]) -> str:
-        """
-        Return a readable industry label. Returns 'Unknown' for null inputs"""
+        """Return a readable industry label. Returns 'Unknown' for null inputs"""
         if not raw or not str(raw).strip():
             return "Unknown"
 
@@ -162,33 +97,17 @@ class IndustryMapper:
         #3: title-case fallback
         return cleaned.title()
 
-
-#
 # Records Exposed Parser
-#
-
 class RecordsExposedParser:
-    """
-    Converts raw records_exposed strings from the breach scraper to integers.
-
-    """
+    """ Converts raw records_exposed strings from the breach scraper to integers."""
 
     SANITY_LIMIT = 10_000_000_000
 
-    _MULTIPLIERS: Dict[str, int] = {
-        "k": 1_000,
-        "thousand": 1_000,
-        "m": 1_000_000,
-        "million": 1_000_000,
-        "b": 1_000_000_000,
-        "billion": 1_000_000_000,
-    }
+    _MULTIPLIERS: Dict[str, int] = {"k": 1_000,"thousand": 1_000,"m": 1_000_000,"million": 1_000_000,"b": 1_000_000_000,"billion": 1_000_000_000,}
 
     @classmethod
     def parse(cls, raw: Optional[str]) -> Optional[int]:
-        """
-            Return integer record count, or None if not parseable
-        """
+        """ Return integer record count, or None if not parseable"""
         if not raw:
             return None
         cleaned = str(raw).strip().lower().replace(",", "")
@@ -221,32 +140,17 @@ class RecordsExposedParser:
             return None
         return value if value <= cls.SANITY_LIMIT else None
 
-
-
-# Deduplicator
-
 class Deduplicator:
-    """
-    Removes duplicate records from a list using a caller-supplied key function.
-
-    """
+    """Removes duplicate records from a list using a caller-supplied key function. """
 
     def __init__(self):
         self.logger = configure_logger("Deduplicator")
 
-    def deduplicate(
-        self,
-        records: List[Dict[str, Any]],
-        key_fn,
-        label:   str = "records"
-    ) -> List[Dict[str, Any]]:
-        """
-        Remove duplicates and return unique records in original order.
-
-        """
-        seen:   set       = set()
+    def deduplicate( self, records: List[Dict[str, Any]], key_fn, label:   str = "records") -> List[Dict[str, Any]]:
+        """ Remove duplicates and return unique records in original order. """
+        seen: set = set()
         unique: List[Dict] = []
-        dupes:  int        = 0
+        dupes: int = 0
 
         for record in records:
             try:
@@ -263,25 +167,14 @@ class Deduplicator:
                 dupes += 1
 
         if dupes:
-            self.logger.info(
-                f"[{label}] Removed {dupes:,} duplicates — "
-                f"{len(unique):,} unique records remain"
-            )
+            self.logger.info(f"[{label}] Removed {dupes:,} duplicates — {len(unique):,} unique records remain" )
         else:
             self.logger.info(f"[{label}] No duplicates found")
 
         return unique
 
-
-# 
-# Abstract Base Record Cleaner
-# 
-
 class BaseRecordCleaner(ABC):
-    """
-    Abstract base class for dataset-specific cleaners.
-
-    """
+    """Abstract base class for dataset-specific cleaners """
 
     def __init__(self):
         self.logger = configure_logger(f"Cleaner.{self.dataset_name}")
@@ -293,19 +186,13 @@ class BaseRecordCleaner(ABC):
     @abstractmethod
     def dataset_name(self) -> str:
         """Label used in log messages. For example 'CVE', 'KEV', 'Breach'."""
-        ...
 
     @abstractmethod
     def clean_record(self, raw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Transform one raw dict to a clean dict, or return None to drop it"""
-        ...
 
     def clean_all(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Apply clean_record() to the full list.
-        Logs per-record warnings on error so one bad record never
-        stops the rest of the batch from being processed
-        """
+        """Apply clean_record() to the full list."""
         self.logger.info(f"Cleaning {len(records):,} raw {self.dataset_name} records....")
         self._dropped=0
         cleaned: List[Dict] = []
@@ -318,26 +205,14 @@ class BaseRecordCleaner(ABC):
                 else:
                     self._dropped += 1
             except Exception as exc:
-                self.logger.warning(
-                    f"Error cleaning {self.dataset_name} record: {exc}",
-                    exc_info=False
-                )
+                self.logger.warning(f"Error cleaning {self.dataset_name} record: {exc}",exc_info=False)
                 self._dropped += 1
 
-        self.logger.info(
-            f"{self.dataset_name} cleaning done — "
-            f"kept={len(cleaned):,}  dropped={self._dropped:,}"
-        )
+        self.logger.info(f"{self.dataset_name} cleaning done — kept={len(cleaned):,}  dropped={self._dropped:,}")
         return cleaned
 
-
-#
-# CVE Cleaner
-#
-
 class CveCleaner(BaseRecordCleaner):
-    """
-    Cleans raw NVD CVE records from the cve_raw MongoDB collection  """
+    """Cleans raw NVD CVE records from the cve_raw MongoDB collection  """
 
     MAX_DESCRIPTION_LEN = 2000
 
@@ -370,30 +245,16 @@ class CveCleaner(BaseRecordCleaner):
             primary_vendor = "Unknown"
 
         # Description cap
-
         description = str(raw.get("description", "")).strip()
         if len(description) > self.MAX_DESCRIPTION_LEN:
             description = description[:self.MAX_DESCRIPTION_LEN]
 
-        return {
-            "cve_id": cve_id,
-            "severity": severity,
-            "vendor": primary_vendor,
+        return {"cve_id": cve_id, "severity": severity,"vendor": primary_vendor,
             "publish_date": self.date_parser.parse(raw.get("publish_date")),
             "modified_date":self.date_parser.parse(raw.get("modified_date")),
-            "description":  description,
-        }
-
-
-# 
-# KEV Cleaner
-# 
-
+            "description":  description, }
 class KevCleaner(BaseRecordCleaner):
-    """
-        Cleans raw CISA KEV records from the kev_raw MongoDB collection.
-
-    """
+    """Cleans raw CISA KEV records from the kev_raw MongoDB collection"""
 
     MAX_ACTION_LEN = 1000
 
@@ -406,33 +267,16 @@ class KevCleaner(BaseRecordCleaner):
         if not cve_id:
             return None
 
-        exploit_date = self.date_parser.parse(
-            raw.get("exploitation_date") or raw.get("date_added")
-        )
+        exploit_date = self.date_parser.parse(raw.get("exploitation_date") or raw.get("date_added"))
 
         required_action = str(raw.get("required_action", "")).strip()
         if len(required_action) > self.MAX_ACTION_LEN:
             required_action = required_action[:self.MAX_ACTION_LEN]
 
-        return {
-            "cve_id": cve_id,
-            "vendor": self.vendor_norm.normalise(raw.get("vendor")),
-            "product":str(raw.get("product","")).strip(),
-            "vulnerability_name": str(raw.get("vulnerability_name", "")).strip(),
-            "exploitation_date": exploit_date,
-            "required_action": required_action,
-        }
-
-
-# 
-# Breach Cleaner
-# 
-
+        return {"cve_id": cve_id,"vendor": self.vendor_norm.normalise(raw.get("vendor")),
+            "product":str(raw.get("product","")).strip(),"vulnerability_name": str(raw.get("vulnerability_name", "")).strip(),"exploitation_date": exploit_date,"required_action": required_action,}
 class BreachCleaner(BaseRecordCleaner):
-    """
-    Cleans raw breach records from the breach_raw MongoDB collection
-
-    """
+    """ Cleans raw breach records from the breach_raw MongoDB collection"""
 
     MAX_ORG_LEN = 500
 
@@ -453,80 +297,38 @@ class BreachCleaner(BaseRecordCleaner):
         if len(organisation) > self.MAX_ORG_LEN:
             organisation = organisation[:self.MAX_ORG_LEN]
 
-        # Prefer breach_date; fall back to breach_year for partial dates
         raw_date = raw.get("breach_date") or raw.get("breach_year")
         breach_date = self.date_parser.parse(raw_date)
 
         industry_raw = raw.get("industry") or raw.get("breach_type")
 
-        return {
-            "organisation": organisation,
-            "industry": self._industry_mapper.map(industry_raw),
-            "breach_type": str(raw.get("breach_type", "")).strip(),
-            "breach_date": breach_date,
-            "records_exposed": self._records_parser.parse(raw.get("records_exposed")),
-            "state":str(raw.get("state", "")).strip(),
-        }
-
-
-#
-# Transform Run Report
-#
+        return {"organisation": organisation, "industry": self._industry_mapper.map(industry_raw), "breach_type": str(raw.get("breach_type", "")).strip(), "breach_date": breach_date, "records_exposed": self._records_parser.parse(raw.get("records_exposed")), "state":str(raw.get("state", "")).strip(), }
 
 class TransformReport:
-    """
-    Collects counts from all three cleaners and prints a single
-    structured summary table at the end of a transform run.
-
-    """
+    """Collects counts from all three cleaners and prints a single structured summary table at the end of a transform run. """
 
     def __init__(self, logger: logging.Logger):
         self.logger = logger
         self._rows: List[Tuple] = []
 
-    def record(
-        self,
-        dataset:     str,
-
-        raw_count:   int,
-        clean_count: int,
-        final_count: int
-    ) -> None:
+    def record(self,dataset: str,raw_count: int,clean_count: int,final_count: int) -> None:
         self._rows.append((dataset, raw_count, clean_count, final_count))
 
     def log(self) -> None:
         self.logger.info("=" * 40)
         self.logger.info("  TRANSFORM SUMMARY")
         self.logger.info("=" * 45)
-        self.logger.info(
-            f"  {'Dataset':<12} {'Raw':>8} {'Cleaned':>10} "
-            f"{'Dropped':>10} {'Dupes':>8} {'Final':>8}"
-        )
+        self.logger.info( f"  {'Dataset':<12} {'Raw':>8} {'Cleaned':>10} {'Dropped':>10} {'Dupes':>8} {'Final':>8}")
+
         self.logger.info("-" * 40)
         for dataset, raw, clean, final in self._rows:
-            dropped = raw   - clean
-            dupes   = clean - final
-            self.logger.info(
-                f"  {dataset:<12} {raw:>8,} {clean:>10,} "
-                f"{dropped:>10,} {dupes:>8,} {final:>8,}"
-            )
+            dropped = raw - clean
+            dupes= clean - final
+            self.logger.info(f"  {dataset:<12} {raw:>8,} {clean:>10,} {dropped:>10,} {dupes:>8,} {final:>8,}")
         self.logger.info("=" * 45)
 
-
-# 
-# Master Data Transformer
-# 
-
 class DataTransformer:
-    """
-    Orchestrates the full transformation pass over all three datasets.
-
-
-    Called by:
-        -Airflow DAG task 'run_transform' (dags/cybersec_pipeline_dag.py)
-        -run_pipeline.py for standalone execution
-
-    """
+    """Orchestrates the full transformation pass over all three datasets."""
 
     def __init__(self):
         self.logger = configure_logger("DataTransformer")
@@ -539,15 +341,7 @@ class DataTransformer:
 
     def run(self) -> Tuple[List, List, List]:
         """
-        Execute the full transform pipeline and return clean records
-        Below are the steps:
-
-        1: Read all raw records from MongoDB
-        2 : Clean each dataset with its dedicated cleaner
-        3: Deduplicate each cleaned dataset
-        4: Log sub-module statistics (dates, vendor normalisation)
-        5: Print the transform summary report
-        """
+        Execute the full transform pipeline and return clean records """
         self.logger.info("DataTransformer starting full transform run....")
 
         #1: Read raw data
@@ -560,26 +354,11 @@ class DataTransformer:
         clean_breaches = self._breach_cleaner.clean_all(raw_breaches)
 
         #3: Deduplicate the cleaned data
-        final_cves = self._deduplicator.deduplicate(
-            clean_cves,
-            key_fn=lambda r: r["cve_id"],
-            label="CVE"
-        )
-        final_kev = self._deduplicator.deduplicate(
-            clean_kev,
-            key_fn=lambda r: r["cve_id"],
-            label="KEV"
-        )
-        # Breach composite key: same organisation can have multiple breach events
-        # but (organisation + date) should be unique per incident
-        final_breaches = self._deduplicator.deduplicate(
-            clean_breaches,
-            key_fn=lambda r: (
-                r.get("organisation", "").lower().strip(),
-                r.get("breach_date", "")
-            ),
-            label="Breach"
-        )
+        final_cves = self._deduplicator.deduplicate(clean_cves, key_fn=lambda r: r["cve_id"], label="CVE")
+
+        final_kev = self._deduplicator.deduplicate(clean_kev, key_fn=lambda r: r["cve_id"], label="KEV" )
+
+        final_breaches = self._deduplicator.deduplicate(clean_breaches,key_fn=lambda r: ( r.get("organisation", "").lower().strip(),r.get("breach_date", "")),label="Breach")
 
         # 4: Sub module statistics 
         self._cve_cleaner.date_parser.log_summary()
@@ -593,11 +372,6 @@ class DataTransformer:
 
         self.logger.info("DataTransformer complete")
         return final_cves, final_kev, final_breaches
-
-
-# 
-# Main method
-
 
 if __name__ == "__main__":
     transformer = DataTransformer()
