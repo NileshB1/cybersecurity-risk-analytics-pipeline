@@ -370,7 +370,7 @@ class PostgreSqlTester(BaseConnectionTest):
         self.config = {
             "host": os.getenv("PG_HOST", "localhost"),
             "port": os.getenv("PG_PORT", "5432"),
-            "dbname": os.getenv("PG_DB",  "cybersecurity_db"),
+            "dbname": os.getenv("PG_DB", "cybersecurity_db"),
             "user": os.getenv("PG_USER", "postgres"),
             "password": os.getenv("PG_PASSWORD", ""),
         }
@@ -410,27 +410,23 @@ class PostgreSqlTester(BaseConnectionTest):
         missing_tables = self.EXPECTED_TABLES - existing_tables
  
         if missing_tables:
-            warnings.append(
-                f"Pipeline tables not yet created: {', '.join(sorted(missing_tables))}."
-            )
+            warnings.append(f"Pipeline tables not yet created: {', '.join(sorted(missing_tables))}.")
  
         conn.close()
  
         return ConnectionResult(
             service=self.service_name,
             success=True,
-            message=(
-                f"PostgreSQL connected - database '{self.config['dbname']}' accessible. "
-                f"Tables present: {len(existing_tables)}/{len(self.EXPECTED_TABLES)}"
-            ),
+            message=( f"PostgreSQL connected - database '{self.config['dbname']}' accessible. "
+                f"Tables present: {len(existing_tables)}/{len(self.EXPECTED_TABLES)}"),
             detail=pg_version,
             warnings=warnings
         )
  
  
-# --------------------------------------------------
+
 # Privacy Rights Clearinghouse Reachability Tester
-# ------------------------------------------------
+
  
 class BreachSiteReachabilityTester(BaseConnectionTest):
     """
