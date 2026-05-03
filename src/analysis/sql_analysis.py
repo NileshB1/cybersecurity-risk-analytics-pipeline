@@ -324,8 +324,8 @@ class ResearchQueryDefinitions:
     def get_extra() -> List[Dict[str, str]]:
 
         return [
-            # breach type breakdown - what kind of breaches happen most
-            # HACK, PHYS, PORT, DISC are PRC breach type codes
+            # breach type breakdown. what kind of breaches happen most
+
             {
                 "label": "Breach type breakdown",
                 "rq": "EXTRA",
@@ -339,7 +339,7 @@ class ResearchQueryDefinitions:
                 """
             },
 
-            # monthly CVE publication trend for the line chart
+            # monthly CVE publication trend
             {
                 "label": "CVE monthly trend",
                 "rq":"EXTRA",
@@ -353,7 +353,7 @@ class ResearchQueryDefinitions:
                 """
             },
 
-            # industry summary richer version for the KPI tiles
+            # industry summary richer version
             {
                 "label": "Industry summary enriched",
                 "rq": "EXTRA",
@@ -369,7 +369,7 @@ class ResearchQueryDefinitions:
                 """
             },
 
-            # top exploited products for the vendor drill-down panel
+            # top exploited products
             {
                 "label":"Top exploited products",
                 "rq": "EXTRA",

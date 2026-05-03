@@ -12,7 +12,7 @@
 
 ## Project Overview
 
-Modern enterprises face a constantly shifting cybersecurity landscape where the gap between vulnerability disclosure and active exploitation continues to narrow. This project builds an integrated analytics pipeline that combines three real-world datasets — NVD CVE records, CISA Known Exploited Vulnerabilities, and Privacy Rights Clearinghouse breach data — to generate actionable enterprise-level cybersecurity intelligence.
+Modern enterprises face a constantly shifting cybersecurity landscape where the gap between vulnerability disclosure and active exploitation continues to narrow. This project builds an integrated analytics pipeline that combines three real-world datasets: NVD CVE records, CISA Known Exploited Vulnerabilities, and Privacy Rights Clearinghouse breach data, to generate actionable enterprise-level cybersecurity intelligence.
 
 ### Provised Analysis On
 
@@ -45,8 +45,8 @@ Modern enterprises face a constantly shifting cybersecurity landscape where the 
 ```
 Data Sources
     NVD CVE API  
-    CISA KEV       -> Kafka Topics  ->  MongoDB (raw)
-    PRC Scraper              |
+    CISA KVE       -> Kafka Topics  ->  MongoDB (raw)
+    Data Breach              |
                              |
                     Dagster Pipeline (ETL)
                              │
@@ -177,7 +177,7 @@ NVD_API_KEY=your_key_here
 
 ---
 
-## How to Run — End to End
+## How to Run: End to End
 
 ### Step 1: Verify connections
 
@@ -277,7 +277,7 @@ Open `http://localhost:3000` in your browser.
 - Go to **Lieage** tab
 - Click **Materialise All**
 - Watch each asset turn green: `read_mongo_raw` → `transform_data` → `load_to_postgres` → `run_analysis`
-![alt text](image-8.png)
+![alt text](image.png)
 
 The pipeline will:
 - Read raw records from MongoDB

@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS breaches (
 
 
 -- TABLE 4 : industry_summary
--- pre-aggregated - refreshed on every pipeline run
+-- pre-aggregated
 
 CREATE TABLE IF NOT EXISTS industry_summary (
     industry VARCHAR(255) PRIMARY KEY,
