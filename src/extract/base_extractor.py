@@ -1,8 +1,5 @@
 """
-Defines the contract that every extractor must follow. All three data
-source extractors (NVD, CISA KEV, Privacy Rights Clearinghouse) inherit from this class and 
-implement its abstract methods.
-"""
+All three data source extractors (NVD, CISA KEV, Privacy Rights Clearinghouse) inherit from this class and implement its abstract methods."""
 
 import json
 import logging
@@ -16,10 +13,7 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env")
 
-
-#
 # Logger Factory
-#
 
 def configure_logger(name):
     logger = logging.getLogger(name)
@@ -28,8 +22,7 @@ def configure_logger(name):
 
     logger.setLevel(logging.DEBUG)
     fmt = logging.Formatter(fmt="%(asctime)s  [%(levelname)-8s]  %(name)s  —  %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
-    )
+        datefmt="%Y-%m-%d %H:%M:%S")
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.INFO)
     ch.setFormatter(fmt)
@@ -41,14 +34,11 @@ def configure_logger(name):
     logger.addHandler(fh)
     return logger
 
-
 # Extraction Statistics
-# 
 
 class ExtractionStats:
     """
-    Tracks how many records were fetched, published to Kafka, and saved locally during a single extractor run.
-    Used for logging and for XCom reporting in the DAG. """
+    Tracks how many records were fetched, published to Kafka, and saved locally during a single extractor run. """
 
     def __init__(self):
         self.fetched:int = 0
@@ -62,28 +52,13 @@ class ExtractionStats:
     def increment_errors(self, n: int = 1) -> None: self.errors += n
 
     def summary(self) -> str:
-        return (
-            f"fetched={self.fetched:,}  "
-            f"published={self.published:,}  "
-            f"skipped={self.skipped:,}  "
-            f"errors={self.errors:,}"
-        )
+        return ( f"fetched={self.fetched:,} published={self.published:,} skipped={self.skipped:,} errors={self.errors:,}")
 
-
-# 
 # Abstract Base Extractor
-# 
-
 class BaseExtractor(ABC):
-    """
-    Abstract base class for all data source extractors.
-    """
+    """Abstract base class for all data source extractors."""
 
-    def __init__(
-        self,
-        kafka_producer=None,
-        output_dir: str = "."
-    ):
+    def __init__( self, kafka_producer=None, output_dir: str = "." ):
        
         self.kafka_producer = kafka_producer
         self.output_dir= output_dir
@@ -96,43 +71,29 @@ class BaseExtractor(ABC):
     @abstractmethod
     def source_name(self) -> str:
         """Human-readable name of the data source"""
-        ...
 
     @property
     @abstractmethod
     def output_filename(self) -> str:
         """Filename for the raw JSON backup"""
-        ...
 
     @abstractmethod
     def _fetch_records(self):
-        """
-        Generator that yields one batch (list of raw dicts) at a time.
-        """
-        ...
+        """Generator that yields one batch (list of raw dicts) at a time."""
 
     @abstractmethod
     def _parse_record(self, raw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """
-        Convert one raw record from the source format to the normalised dict the pipeline 
-        expects. Return None to skip a record
-        """
-        ...
+        """Convert one raw record from the source format to the normalised dict the pipeline 
+        expects"""
 
     @abstractmethod
     def _publish_batch(self, batch: List[Dict[str, Any]]):
-        """
-            Call the appropriate producer method for this data source. Each subclass knows which Kafka 
-            topic its records belong to.
-        """
-        ...
+        """Call the appropriate producer method for this data source. Each subclass knows which Kafka topic its records belong to"""
 
     # Shared Implementation 
 
     def extract_and_stream(self):
-        """
-        Main entry point called by the Airflow DAG task
-        """
+        """ Main entry point called by the Airflow DAG task"""
         self.logger.info(f"Starting extraction from: {self.source_name}")
         all_records: List[Dict[str, Any]] = []
 
@@ -162,9 +123,7 @@ class BaseExtractor(ABC):
         return self.stats.fetched
 
     def _save_json_backup(self, records: List[Dict[str, Any]]):
-        """
-        Write all extracted records to a local JSON file.
-        """
+        """Write all extracted records to a local JSON file."""
         os.makedirs(self.output_dir, exist_ok=True)
         path = os.path.join(self.output_dir, self.output_filename)
 
