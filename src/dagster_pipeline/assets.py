@@ -1,24 +1,15 @@
-"""
-Assets are the Dagster way to run functions
-Each asset depends on the previous one - Dagster figures out
-the execution order automatically from the dependencies.
-1.
-read_mongo_raw 
-2.transform_data 
-3. load_to_postgres 
-4.run_analysis
-"""
+"""Assets are the Dagster way to run functions. Each asset depends on the previous one. Dagster figures out the execution order automatically from the dependencies.
+1.read_mongo_raw 2.transform_data 3. load_to_postgres 4.run_analysis"""
+
 import tempfile
 import os
 import sys
 import logging
 from typing import Dict, List
-
 from dagster import asset, AssetExecutionContext
 from dotenv import load_dotenv
 
 load_dotenv()
-
 _TMP_DIR = tempfile.gettempdir()
 _CVE_TMP_PATH = os.path.join(_TMP_DIR, "dagster_clean_cves.json")
 _KEV_TMP_PATH= os.path.join(_TMP_DIR, "dagster_clean_kev.json")
@@ -30,10 +21,7 @@ def configure_logger(name: str) -> logging.Logger:
         return logger
     logger.setLevel(logging.DEBUG)
     import sys
-    fmt = logging.Formatter(
-        fmt="%(asctime)s  [%(levelname)-8s]  %(name)s  -  %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
-    )
+    fmt = logging.Formatter(fmt="%(asctime)s  [%(levelname)-8s]  %(name)s  -  %(message)s",datefmt="%Y-%m-%d %H:%M:%S")
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.INFO)
     ch.setFormatter(fmt)
@@ -44,20 +32,12 @@ def configure_logger(name: str) -> logging.Logger:
     logger.addHandler(fh)
     return logger
 
-
-
 # Verifies MongoDB has data before transform runs
-@asset(
-    group_name="cybersecurity_pipeline",
-    description="Verify MongoDB raw collections are populated and return record counts",
-)
-def read_mongo_raw(context: AssetExecutionContext) -> Dict[str, int]:
-    """
-    Checks that all three raw MongoDB collections have data.
-    
-    """
-    import pymongo
+@asset(group_name="cybersecurity_pipeline",description="Verify MongoDB raw collections are populated and return record counts",)
 
+def read_mongo_raw(context: AssetExecutionContext) -> Dict[str, int]:
+
+    import pymongo
     logger = configure_logger("asset.read_mongo_raw")
 
     uri= os.getenv("MONGO_URI", "mongodb://localhost:27017")
@@ -68,38 +48,24 @@ def read_mongo_raw(context: AssetExecutionContext) -> Dict[str, int]:
 
     counts = {}
     for col in ["cve_raw", "kev_raw", "breach_raw"]:
-        n         = db[col].count_documents({})
+        n = db[col].count_documents({})
         counts[col] = n
-        context.log.info(f"  {col}: {n:,} documents")
+        context.log.info(f" {col}: {n:,} documents")
 
     client.close()
 
-    # fail fast if any collection is empty
+    # fail if any collection is empty
     empty = [k for k, v in counts.items() if v == 0]
     if empty:
-        raise Exception(
-            f"Collections are empty: {empty}. "
-            f"Run the extractors first before triggering the pipeline."
-        )
+        raise Exception(f"Collections are empty: {empty}. Run the extractors first before triggering the pipeline." )
 
-    context.log.info(
-        f"MongoDB verified: CVE={counts['cve_raw']:,} "
-        f"KEV={counts['kev_raw']:,} Breach={counts['breach_raw']:,}"
-    )
+    context.log.info(f"MongoDB verified: CVE={counts['cve_raw']:,} KEV={counts['kev_raw']:,} Breach={counts['breach_raw']:,}" )
     return counts
-
-
 
 # 2: transform_data
 
-@asset(
-    group_name="cybersecurity_pipeline",
-    description="Clean and normalise raw MongoDB records using DataTransformer",
-)
-def transform_data(
-    context:        AssetExecutionContext,
-    read_mongo_raw: Dict[str, int],
-) -> bool:
+@asset(group_name="cybersecurity_pipeline",description="Clean and normalise raw MongoDB records using DataTransformer",)
+def transform_data(context: AssetExecutionContext,read_mongo_raw: Dict[str, int],) -> bool:
     import json
 
     logger = configure_logger("asset.transform_data")
@@ -113,28 +79,18 @@ def transform_data(
         raise Exception("Transformer returned 0 CVE records")
 
     # write to fixed temp paths - no dict passing needed
-    with open(_CVE_TMP_PATH, "w") as f: json.dump(clean_cves,    f)
-    with open(_KEV_TMP_PATH,"w") as f: json.dump(clean_kev,     f)
+    with open(_CVE_TMP_PATH, "w") as f: json.dump(clean_cves,f)
+    with open(_KEV_TMP_PATH,"w") as f: json.dump(clean_kev,f)
     with open(_BREACH_TMP_PATH,"w") as f: json.dump(clean_breaches,f)
 
-    context.log.info(
-        f"Transform complete: CVE={len(clean_cves):,} KEV={len(clean_kev):,} Breach={len(clean_breaches)}"
-    )
+    context.log.info(f"Transform complete: CVE={len(clean_cves):,} KEV={len(clean_kev):,} Breach={len(clean_breaches)}")
     context.log.info(f"Clean records written to {_TMP_DIR}")
     return True
 
-
 # 3: load_to_postgres
 
-
-@asset(
-    group_name="cybersecurity_pipeline",
-    description="Insert cleaned records into PostgreSQL using PostgresLoader",
-)
-def load_to_postgres(
-    context:       AssetExecutionContext,
-    transform_data: bool, 
-) -> bool:
+@asset(group_name="cybersecurity_pipeline", description="Insert cleaned records into PostgreSQL using PostgresLoader",)
+def load_to_postgres(context: AssetExecutionContext,transform_data: bool,) -> bool:
     import json
 
     logger = configure_logger("asset.load_to_postgres")
@@ -148,12 +104,10 @@ def load_to_postgres(
     with open(_KEV_TMP_PATH) as f: clean_kev = json.load(f)
     with open(_BREACH_TMP_PATH) as f: clean_breaches = json.load(f)
 
-    context.log.info(
-        f"Loaded from temp files: CVE={len(clean_cves):,} KEV={len(clean_kev):,} Breach={len(clean_breaches):}"
-    )
+    context.log.info(f"Loaded from temp files: CVE={len(clean_cves):,} KEV={len(clean_kev):,} Breach={len(clean_breaches):}")
 
     from load.postgres_loader import PostgresLoader
-    loader  = PostgresLoader()
+    loader = PostgresLoader()
     success = loader.load_all(clean_cves, clean_kev, clean_breaches)
 
     if not success:
@@ -162,17 +116,10 @@ def load_to_postgres(
     context.log.info("PostgreSQL load completed.... ha ha")
     return success
 
-
 # run_analysis
 
-@asset(
-    group_name="cybersecurity_pipeline",
-    description="Run RQ SQL analysis queries and export CSVs to analysis/output/",
-)
-def run_analysis(
-    context:          AssetExecutionContext,
-    load_to_postgres: bool,     # bool trigger - no change needed here
-) -> bool:
+@asset(group_name="cybersecurity_pipeline",description="Run RQ SQL analysis queries and export CSVs to analysis/output/",)
+def run_analysis(context: AssetExecutionContext,load_to_postgres: bool,) -> bool:
     logger = configure_logger("asset.run_analysis")
     logger.info("Running SQL analysis queries....")
 
