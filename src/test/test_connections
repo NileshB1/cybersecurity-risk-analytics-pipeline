@@ -67,9 +67,8 @@ def configure_logger(name: str) -> logging.Logger:
 
     return logger
 
-# ----------------------
+
 # Result Dataclass
-# ----------------------
 @dataclass
 class ConnectionResult:
     """
@@ -82,9 +81,9 @@ class ConnectionResult:
     detail:  Optional[str] = None
     warnings: list = field(default_factory=list)
 
-# -----------------------------------------
+
 # Abstarct Base Class for Connection Tests
-# ----------------------------------------
+
 class BaseConnectionTest(ABC):
     """
     Abstract base class for connection tests.
@@ -130,9 +129,9 @@ class BaseConnectionTest(ABC):
                 message=f"Unexpected exception: {exp}"
             )
 
-# -----------------------
+
 # NVD API Tester
-# ------------------------
+
  
 class NvdApiTester(BaseConnectionTest):
     """
@@ -218,9 +217,8 @@ class NvdApiTester(BaseConnectionTest):
             warnings=warnings
         )
 
-# -----------------------
+
 # CISA KEV Feed Tester
-# -----------------------
  
 class CisaKevTester(BaseConnectionTest):
     """
