@@ -35,8 +35,6 @@ def configure_logger(name: str) -> logging.Logger:
     return logger
 
 
-# PostgresReader
-
 
 class PostgresReader:
 
@@ -84,9 +82,6 @@ class PostgresReader:
             "SELECT id, organisation, industry, breach_type, breach_date, records_exposed, state FROM breaches;",
             label="breaches"
         )
-
-
-# TimeToExploitCalculator
 
 class TimeToExploitCalculator:
 
@@ -175,7 +170,6 @@ class TimeToExploitCalculator:
         }
 
 
-# CveKevJoiner
 
 class CveKevJoiner:
 
@@ -227,9 +221,6 @@ class CveKevJoiner:
 
 
 
-# MergeOutputWriter
-
-
 class MergeOutputWriter:
 
     def __init__(self, output_dir: str = OUTPUT_DIR):
@@ -262,7 +253,6 @@ class MergeOutputWriter:
 
 
 
-# CveKevMerger
 class CveKevMerger:
 
     def __init__(self):

@@ -1,12 +1,3 @@
-"""
-
-Loads the three raw JSON backup files produced by the extractors into
-MongoDB raw collections. Also exposes a verify_only() method used by
-the Airflow DAG gate task to confirm all collections are populated
-before the transform stage begins.
-
-
-"""
 
 import json
 import logging
@@ -22,9 +13,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
-
-# Logger Factory
 
 
 def configure_logger(name: str) -> logging.Logger:
@@ -48,8 +36,6 @@ def configure_logger(name: str) -> logging.Logger:
 
 
 
-# Collection Load Result
-
 @dataclass
 class CollectionLoadResult:
     """
@@ -68,10 +54,6 @@ class CollectionLoadResult:
     def written(self) -> int:
         return self.inserted + self.modified
 
-
-# 
-# Mongo Connection Manager
-# 
 
 class MongoConnectionManager:
     """
@@ -119,11 +101,7 @@ class MongoConnectionManager:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
         return False
-
-
-# 
-# JSON File Reader
-# 
+ 
 
 class JsonFileReader:
     """
@@ -168,10 +146,6 @@ class JsonFileReader:
         self.logger.info(f"{len(data):,} records loaded from '{path}'")
         return data
 
-
-# 
-# Collection Writer
-# 
 
 class CollectionWriter:
     """
@@ -267,10 +241,7 @@ class CollectionWriter:
         )
         return result_obj
 
-
-# 
-# Mongo Verifier
-# 
+ 
 
 class MongoVerifier:
     """
@@ -320,9 +291,6 @@ class MongoVerifier:
 
 
 
-# Load Summary Reporter
-
-
 class LoadSummaryReporter:
     """
     Prints a structured table of all CollectionLoadResult objects.
@@ -352,9 +320,6 @@ class LoadSummaryReporter:
             )
         self.logger.info("=" * 44)
 
-
-
-# Mongo Loader (Orchestrator)
 
 
 class MongoLoader:
@@ -389,12 +354,12 @@ class MongoLoader:
 
         self.logger.info("MongoLoader.load_from_files() starting...")
 
-        #1: Read JSON backups
+        
         cve_records    = self._reader.read(cve_path)
         kev_records    = self._reader.read(kev_path)
         breach_records = self._reader.read(breach_path)
 
-        #2 : Connect, write, verify
+        
         with MongoConnectionManager() as mgr:
             db = mgr.get_db()
             writer = CollectionWriter(db)
@@ -410,7 +375,7 @@ class MongoLoader:
             verifier  = MongoVerifier(db)
             all_ok, _ = verifier.verify()
 
-        #3 : Print summary
+       
         self._reporter.log()
 
         if all_ok:
@@ -433,7 +398,6 @@ class MongoLoader:
 
 
 
-# Entry Point
 if __name__ == "__main__":
     loader  = MongoLoader()
     success = loader.load_from_files()

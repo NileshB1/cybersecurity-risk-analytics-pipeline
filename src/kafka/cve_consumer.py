@@ -1,9 +1,4 @@
-"""
 
-Subscribes to all three Kafka topics (nvd_cve_stream, kev_stream,
-breach_stream), deserialises incoming messages, and writes them to the
-corresponding MongoDB raw collections (cve_raw, kev_raw, breach_raw).
-"""
 
 import os
 import logging
@@ -23,18 +18,12 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env")
 
 
-# 
-# MongoDB Writer
-# 
-
 class MongoWriter:
     """
     Handles all MongoDB write operations for the consumer.
     """
 
-    # Batch flush threshold for writes. Default is 5000 to reduce flush
-    # frequency during large imports. Can be overridden with the
-    # environment variable `MONGO_BATCH_THRESHOLD` (int).
+
     BATCH_THRESHOLD = int(os.getenv("MONGO_BATCH_THRESHOLD", "5000"))
 
     def __init__(self):
@@ -45,8 +34,8 @@ class MongoWriter:
         )
         self._db = self._client[os.getenv("MONGO_DB", "cybersecurity_db")]
         self._batches: Dict[str, list] = {
-            "cve_raw": [],
-            "kev_raw": [],
+            "cve_raw":[],
+            "kev_raw":[],
             "breach_raw":[],
         }
         self._counters: Dict[str, int] = {k: 0 for k in self._batches}
@@ -66,7 +55,7 @@ class MongoWriter:
                 upsert=True
             )
             for r in records
-            if r.get(key_field)     # skip records missing the unique key
+            if r.get(key_field)    
         ]
 
         if operations:
@@ -115,10 +104,6 @@ class MongoWriter:
         self.logger.info("MongoWriter closed.")
 
 
-# 
-# Message Router
-# 
-
 class MessageRouter:
     """
     Dispatches a Kafka message to the correct MongoWriter method based on which 
@@ -144,10 +129,6 @@ class MessageRouter:
             self.logger.warning(f"No route configured for topic '{topic}' — message dropped.")
 
 
-# 
-# Consumer
-# 
-
 class CybersecConsumer:
     """
     Polls all three Kafka topics and writes incoming records to MongoDB.
@@ -166,7 +147,7 @@ class CybersecConsumer:
         self._running = False
         self._connect_with_retry()
 
-    # Connection 
+
 
     def _connect_with_retry(self) -> None:
         for attempt in range(1, self.MAX_CONNECT_RETRIES + 1):
@@ -196,7 +177,7 @@ class CybersecConsumer:
             f"Kafka consumer could not connect after {self.MAX_CONNECT_RETRIES} attempts."
         )
 
-    #Poll Loop
+  
 
     def start(self, max_batches: Optional[int] = None) -> None:
         """
@@ -213,7 +194,7 @@ class CybersecConsumer:
 
         try:
             while self._running:
-                # poll() returns a dict: {TopicPartition -> [ConsumerRecord, ...]}
+            
                 message_batch = self._consumer.poll(timeout_ms=self.POLL_TIMEOUT_MS)
 
                 if not message_batch:
@@ -232,7 +213,7 @@ class CybersecConsumer:
                                     exc_info=True
                                 )
 
-                    # Commit offsets only after the whole batch is routed
+                    
                     self._consumer.commit()
                     total_processed += batch_count
                     self.logger.info(
@@ -253,7 +234,6 @@ class CybersecConsumer:
         self.logger.info(f"Consumer finished. Total records processed: {total_processed:,}")
         self.logger.info(f"MongoDB write summary: {self.writer.total_written()}")
 
-    # Lifecycle 
 
     def stop(self) -> None:
         """
@@ -277,9 +257,6 @@ class CybersecConsumer:
         return False
 
 
-# 
-# Entry Point
-# 
 
 if __name__ == "__main__":
     with CybersecConsumer() as consumer:

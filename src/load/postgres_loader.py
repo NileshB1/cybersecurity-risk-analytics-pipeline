@@ -1,9 +1,4 @@
-"""
 
-Takes the clean records that came out of transformer.py and
-inserts them into the four PostgreSQL tables we created in postgres_schema.sql
-
-"""
 
 import os
 import sys
@@ -18,7 +13,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# logger setup - same format as rest of project
 def configure_logger(name: str) -> logging.Logger:
     logger = logging.getLogger(name)
     if logger.handlers:
@@ -43,9 +37,6 @@ def configure_logger(name: str) -> logging.Logger:
 
 
 
-# PostgresConnection
-
-
 class PostgresConnection:
 
     def __init__(self):
@@ -53,7 +44,7 @@ class PostgresConnection:
 
         self._conn: Optional[psycopg2.extensions.connection] = None
 
-        # read creds from .env
+        
         self._config = {
             "host": os.getenv("PG_HOST", "localhost"),
             "port":os.getenv("PG_PORT","5432"),
@@ -88,7 +79,7 @@ class PostgresConnection:
             self._conn.close()
             self.logger.debug("PostgreSQL connection closed")
 
-    # so we can use  with PostgresConnection() as pg:
+ 
     def __enter__(self):
         return self.connect()
 
@@ -97,11 +88,8 @@ class PostgresConnection:
         return False
 
 
-
-# SchemaManager
 class SchemaManager:
 
-    # path relative to project root, adjust if running from a subfolder
     SCHEMA_FILE = "load/postgres_schema.sql"
 
     EXPECTED_TABLES = [
@@ -162,14 +150,13 @@ class SchemaManager:
 
 
 
-# BaseTableWriter
 class BaseTableWriter:
 
     # subclasses override these
     TABLE_NAME: str= ""
     UNIQUE_KEY: str= ""
     INSERT_SQL: str= ""
-    BATCH_SIZE: int= 500  # how many rows per executemany call
+    BATCH_SIZE: int= 500 
 
     def __init__(self, conn: psycopg2.extensions.connection):
         self.logger = configure_logger(f"Writer.{self.TABLE_NAME}")
@@ -205,7 +192,7 @@ class BaseTableWriter:
         )
 
         written = 0
-        # chunk into batches so we dont send 200k rows in one go
+        
         for start in range(0, len(valid), self.BATCH_SIZE):
             batch = valid[start : start + self.BATCH_SIZE]
             try:
@@ -241,30 +228,21 @@ class BaseTableWriter:
 
 
 
-# VulnerabilitiesWriter
-
 class VulnerabilitiesWriter(BaseTableWriter):
 
     TABLE_NAME = "vulnerabilities"
     UNIQUE_KEY = "cve_id"
 
-    # using %(field)s dict-style so its easier to read than %s positional
+
     INSERT_SQL = """
         INSERT INTO vulnerabilities
             (cve_id, severity, vendor, publish_date, modified_date, description)
         VALUES
             (%(cve_id)s, %(severity)s, %(vendor)s, %(publish_date)s, %(modified_date)s, %(description)s)
-        ON CONFLICT (cve_id) DO UPDATE
-            SET severity = EXCLUDED.severity,
-            vendor = EXCLUDED.vendor,
-            publish_date  = EXCLUDED.publish_date,
-                    modified_date= EXCLUDED.modified_date,
-                description= EXCLUDED.description;
+        ON CONFLICT (cve_id) DO UPDATE SET severity = EXCLUDED.severity, vendor = EXCLUDED.vendor,
+            publish_date  = EXCLUDED.publish_date, modified_date= EXCLUDED.modified_date, description= EXCLUDED.description;
     """
 
-
-
-# ExploitedVulnsWriter
 
 class ExploitedVulnsWriter(BaseTableWriter):
 
@@ -276,16 +254,13 @@ class ExploitedVulnsWriter(BaseTableWriter):
             (cve_id, vendor, product, vulnerability_name,exploitation_date, required_action)
         VALUES
             (%(cve_id)s, %(vendor)s, %(product)s, %(vulnerability_name)s, %(exploitation_date)s, %(required_action)s)
-        ON CONFLICT (cve_id) DO UPDATE
-            SET vendor= EXCLUDED.vendor,
-                product = EXCLUDED.product,
-            exploitation_date  =EXCLUDED.exploitation_date,
+        ON CONFLICT (cve_id) DO UPDATE SET vendor= EXCLUDED.vendor, product = EXCLUDED.product, exploitation_date  =EXCLUDED.exploitation_date,
             required_action    = EXCLUDED.required_action;
     """
 
 
 
-# BreachesWriter
+
 
 class BreachesWriter(BaseTableWriter):
 
@@ -311,8 +286,7 @@ class BreachesWriter(BaseTableWriter):
 
         valid = self._filter_valid(records)
 
-        # clear existing rows first - fresh load every run
-        # this is fine since breach data doesnt change between runs
+       
         self.logger.info("Truncating breaches table before reload....")
         try:
             with self._conn.cursor() as cur:
@@ -323,12 +297,11 @@ class BreachesWriter(BaseTableWriter):
             self.logger.error(f"Could not truncate breaches table: {e}")
             return 0
 
-        # now do the normal batched insert from parent
+       
         return super().write(valid)
 
 
 
-# IndustrySummaryWriter
 class IndustrySummaryWriter:
 
     def __init__(self, conn: psycopg2.extensions.connection):
@@ -341,25 +314,13 @@ class IndustrySummaryWriter:
         truncate_sql = "TRUNCATE TABLE industry_summary;"
 
         rebuild_sql = """
-            INSERT INTO industry_summary (
-                industry, breach_count, total_records,  avg_records_breach,
-                max_records, first_breach_year,  last_breach_year,
-                avg_severity
+            INSERT INTO industry_summary ( industry, breach_count, total_records,  avg_records_breach, max_records, first_breach_year,  last_breach_year, avg_severity
             )
-            SELECT
-                b.industry,
-                COUNT(b.id) AS breach_count,  COALESCE(SUM(b.records_exposed), 0) AS total_records,
-                COALESCE(ROUND(AVG(b.records_exposed))::BIGINT, 0)  AS avg_records_breach,
+            SELECT b.industry,
+                COUNT(b.id) AS breach_count,  COALESCE(SUM(b.records_exposed), 0) AS total_records,  COALESCE(ROUND(AVG(b.records_exposed))::BIGINT, 0)  AS avg_records_breach,
                 COALESCE(MAX(b.records_exposed), 0) AS max_records, MIN(EXTRACT(YEAR FROM b.breach_date)::INT) AS first_breach_year,
-                MAX(EXTRACT(YEAR FROM b.breach_date)::INT) AS last_breach_year,
-                ROUND(
-                    (SELECT AVG(v.severity)
-                        FROM vulnerabilities v  WHERE v.severity IS NOT NULL
-                        LIMIT 1 )::NUMERIC
-                , 1)  AS avg_severity
-            FROM breaches b WHERE b.industry IS NOT NULL
-            AND b.industry != 'Unknown'
-            GROUP BY b.industry ORDER BY breach_count DESC;
+                MAX(EXTRACT(YEAR FROM b.breach_date)::INT) AS last_breach_year, ROUND((SELECT AVG(v.severity) FROM vulnerabilities v  WHERE v.severity IS NOT NULL
+              LIMIT 1 )::NUMERIC, 1)  AS avg_severity FROM breaches b WHERE b.industry IS NOT NULL AND b.industry != 'Unknown' GROUP BY b.industry ORDER BY breach_count DESC;
         """
 
         try:
@@ -375,7 +336,7 @@ class IndustrySummaryWriter:
 
 
 
-# LoadReport
+
 class LoadReport:
 
     def __init__(self, logger: logging.Logger):
@@ -401,7 +362,7 @@ class LoadReport:
 
 
 
-# PostgresLoader
+
 class PostgresLoader:
     """
     Orchestrates loading all three datasets into PostgreSQL.
@@ -428,10 +389,10 @@ class PostgresLoader:
         with PostgresConnection() as pg_mgr:
             conn = pg_mgr.get()
 
-            ####make sure tables exist before trying to insert
+            
             SchemaManager(conn).ensure_schema()
 
-            # write vulnerabilities (NVD CVEs)
+            
             vw = VulnerabilitiesWriter(conn)
             
             written = vw.write(clean_cves)
@@ -439,7 +400,7 @@ class PostgresLoader:
             if written == 0 and len(clean_cves) > 0:
                 success = False
 
-            # write KEV
+          
             ew      = ExploitedVulnsWriter(conn)
             written = ew.write(clean_kev)
             report.add("exploited_vulnerabilities", len(clean_kev), written)
@@ -447,14 +408,13 @@ class PostgresLoader:
             if written == 0 and len(clean_kev) > 0:
                 success = False
 
-            # write breaches
             bw      = BreachesWriter(conn)
             written = bw.write(clean_breaches)
             report.add("breaches", len(clean_breaches), written)
             if written == 0 and len(clean_breaches) > 0:
                 success = False
 
-            # rebuild summary - has to run after breaches are loaded
+           
             try:
                 IndustrySummaryWriter(conn).rebuild()
                 report.add("industry_summary", 1, 1)
@@ -470,9 +430,6 @@ class PostgresLoader:
         return success
 
 
-
-# quick sanity check - run file directly to verify tables and counts
-# python load/postgres_loader.py
 
 if __name__ == "__main__":
     import sys
@@ -501,8 +458,7 @@ if __name__ == "__main__":
     print("\n--- Final row counts are:")
     with PostgresConnection() as pg:
         conn = pg.get()
-        # Postgres tables are created already and exists on my local
-        #Note: Run 'postgres_schema.sql' file on local before running this script
+       
         tables = [
             "vulnerabilities",
             "exploited_vulnerabilities",

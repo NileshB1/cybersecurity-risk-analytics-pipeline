@@ -1,17 +1,3 @@
-"""
-    kafka/kafka_config.py
-    Kafka configuration file having configuration details for bootstrap servers, 
-    topic name, etc.
-    Following best practices, here Single Responsibility Principle is followed(SOLID principles), 
-    and this file is solely responsible for Kafka configuration.
-
-    Topics:
-    -------
-    nvd_cve_stream- CVE records fetched from the NVD API
-    kev_stream - Known Exploited Vulnerability records from CISA
-    breach_stream - Data breach records scraped from Privacy Rights Clearinghouse
-"""
-
 import os
 from dotenv import load_dotenv
 import logging
@@ -53,7 +39,7 @@ def configure_logger(name) -> logging.Logger:
     """Backward-compatible alias used by the producer and consumer modules."""
     return config_logger(name)
 
-# Topic Registry
+
 @dataclass(frozen=True)
 class KafkaTopics:
     """
@@ -67,7 +53,7 @@ class KafkaTopics:
     def all_topics(self):
         return [self.nvd_cve, self.kev, self.breach]
     
-# Producer settings
+
 @dataclass
 class KafkaProducerConfig:
     """
@@ -84,7 +70,7 @@ class KafkaProducerConfig:
     acks = "all"
     retries = 5
     retry_backoff_ms = 300
-    batch_size_bytes= 32768          # 32 KB
+    batch_size_bytes= 32768          
     linger_ms = 20
     compression_type = "gzip"
     request_timeout_ms = 30000
@@ -111,7 +97,7 @@ class KafkaConsumerConfig:
     session_timeout_ms= 30000
     heartbeat_interval_ms = 10000
 
-# Master Config Class
+
 class KafkaConfig:
     """
     Single entry point for all Kafka configuration
